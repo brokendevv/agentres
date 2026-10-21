@@ -1,0 +1,1145 @@
+# MASTER BUILD PROMPT — Production-Ready AI Restaurant Operations SaaS
+
+## 1. Your role and mission
+
+Act as a principal SaaS architect, senior full-stack engineer, database architect, AI agent engineer, security engineer, DevOps engineer, product designer, and QA lead.
+
+Your mission is to design, implement, test, secure, and prepare a **real, production-grade, multi-tenant restaurant management SaaS platform powered by an AI operations agent**.
+
+The product serves independent restaurants, cafés, food businesses, restaurant groups, and multi-branch operators. It combines restaurant operations, purchasing, inventory, customers, tips, staff communication, meetings, reviews, reservations, sales integrations, automated workflows, analytics, an AI assistant, and restaurant website services in one connected platform.
+
+This is a real commercial product, not a tutorial, demonstration, proof of concept, wireframe, mockup, or disposable MVP.
+
+### Absolute delivery rules
+
+1. Inspect the existing repository, tools, dependencies, hosting environment, and available credentials before making architectural decisions. Preserve useful existing work.
+2. Implement the real application end to end. Do not stop after a plan, architecture diagram, landing page, or partially functional dashboard.
+3. Never use fake API responses, mock payment confirmations, simulated integrations, fake AI answers, non-persistent forms, dead buttons, or fabricated analytics in production.
+4. Every completed feature must have a real backend implementation, persistent data where appropriate, authorization, validation, loading states, error handling, and tests.
+5. Use current official documentation to verify third-party API contracts, payment integration requirements, hosting limits, and service pricing.
+6. Where credentials or external approvals are required, implement the actual integration and its configuration workflow. Clearly report the missing external prerequisite. Never represent the integration as live until it is genuinely operational.
+7. Work continuously through implementation, testing, fixing, and verification. Do not deliver only a task list or tell the user to finish essential programming manually.
+8. Make reasonable product decisions without unnecessary clarification. Put adjustable business rules in configuration instead of hardcoding uncertain assumptions.
+9. Never claim tests passed, payments work, backups exist, or deployment succeeded without evidence.
+10. Prioritize correctness, security, maintainability, real-world usability, and operational reliability over superficial feature counts.
+
+---
+
+## 2. Product vision and experience
+
+Build an integrated platform where a restaurant owner can understand and control daily operations without switching among numerous applications.
+
+The application must have:
+
+- A public marketing website.
+- Secure registration, login, and password recovery.
+- Restaurant onboarding and workspace setup.
+- A comprehensive management dashboard.
+- Modules for inventory, purchasing, tips, staff, customers, reviews, communication, meetings, bookings, sales, reports, and automation.
+- An AI restaurant operations assistant available throughout the authenticated workspace.
+- A website builder and custom website service.
+- Subscription billing with Free, Pro, Business, and Ultra plans.
+- A platform administration dashboard.
+- Responsive desktop, tablet, and mobile interfaces.
+- Installable Progressive Web App support and carefully implemented offline workflows.
+
+All modules must share the correct underlying records. A purchase should affect purchasing reports and inventory when it is received. A completed sale can inform sales reports, customer history, and recipe consumption when the relevant data and integration exist. A staff meeting can produce assigned tasks. An expired subscription must affect the plan entitlements actually enforced by the backend.
+
+### Visual identity
+
+Create an original, professional hospitality-software brand with a consistent design system. If a product name or logo is not provided, use a configurable brand identity and make the final name, colors, logo, and domain editable before public launch.
+
+Design for professional restaurant operators rather than a generic AI dashboard.
+
+Use:
+- Clear information hierarchy and excellent typography.
+- Refined tables, charts, forms, filters, and contextual actions.
+- Fast, accessible workflows for frequent operational tasks.
+- Consistent icons, spacing, typography, and component states.
+- Meaningful empty states that guide users through genuine setup.
+- Keyboard accessibility and appropriate contrast.
+- Light and dark themes where practical.
+- Responsive layouts designed for touch and smaller screens.
+- Useful success, validation, loading, retry, and failure feedback.
+
+Avoid excessive gradients, meaningless animation, huge empty hero sections inside the application, unnecessary cards, decorative metrics, and generic AI-generated visual clutter.
+
+All visible controls must perform their advertised actions.
+
+## 3. Architecture, repository, and engineering standards
+
+First inspect the environment and determine the most maintainable production architecture compatible with the available deployment platform.
+
+For a new application, prefer:
+
+- React, TypeScript, and Vite for the web application.
+- A consistent, accessible component system using Tailwind CSS and well-maintained UI primitives.
+- PostgreSQL as the primary relational database.
+- Supabase Auth, PostgreSQL, Storage, and Realtime where appropriate.
+- Secure server-side functions for privileged actions, integrations, AI orchestration, subscriptions, and webhook handling.
+- Cloudflare Pages or an appropriate Cloudflare deployment for the frontend and supported serverless functions.
+- Supabase Edge Functions or another compatible server-side runtime for operations requiring secrets or database privileges.
+- GitHub for version control, automated tests, and deployment workflows.
+
+This is a preferred architecture, not permission to combine incompatible runtimes blindly. Verify compatibility against current official documentation before implementation. If the repository already has a strong, compatible architecture, preserve it unless a documented technical reason warrants changing it.
+
+### Required engineering practices
+
+- Strict TypeScript.
+- Reusable components and clearly separated domain modules.
+- Validated inputs and strongly typed API contracts.
+- Database migrations committed to version control.
+- Server-side authorization for every privileged operation.
+- Centralized error handling and structured logging.
+- Idempotent operations for financial and inventory workflows.
+- Dependency management and security checks.
+- Automated linting, type checking, and tests in CI.
+- Example environment-variable documentation without secrets.
+- No secrets committed to source control.
+- No privileged service credentials exposed to browser code.
+- No SQL concatenation with untrusted input.
+- No hardcoded administrator passwords, secret keys, or payment credentials.
+
+Keep business logic out of presentation components. Do not put the entire backend, billing logic, or AI orchestration in a single oversized file.
+
+## 4. Multi-tenant accounts, permissions, and onboarding
+
+Implement the platform as a genuine multi-tenant SaaS from the beginning.
+
+### Authentication
+
+Support:
+- Account registration.
+- Email verification.
+- Secure login and logout.
+- Password reset.
+- Session management.
+- Optional multi-factor authentication when supported.
+- Invitation-based staff onboarding.
+- Account recovery and appropriate rate limits.
+- Secure account deletion and export workflows.
+
+### Organization structure
+
+Support:
+
+Platform operator → restaurant group → restaurant workspace → branch/location → staff membership.
+
+An independent restaurant can use one workspace. A restaurant group can manage several branches while retaining branch-specific records and consolidated reports.
+
+Each organization must have isolated data, permissions, billing, usage quotas, and integrations.
+
+### Roles
+
+Provide sensible defaults for:
+
+- Platform administrator.
+- Restaurant owner.
+- Group or branch manager.
+- Finance/accounting user.
+- Inventory manager.
+- Front-of-house staff.
+- Other staff with explicitly granted permissions.
+
+Implement granular permission checks rather than trusting role labels supplied by the client.
+
+The platform administrator can manage platform configuration, plan definitions, support cases, and service health. Access to customer business records must be restricted, logged, and justified by actual administrative needs.
+
+Restaurant employees must only see data authorized for their organization, branches, and role.
+
+**Critical acceptance criterion:** users from one restaurant must not be able to retrieve another restaurant's data by modifying URLs, API requests, IDs, filters, exports, or AI queries.
+
+Implement and test PostgreSQL Row Level Security wherever supported by the chosen architecture.
+
+## 5. Inventory and ingredient management
+
+Build a complete inventory system for ingredients, packaging, beverages, supplies, and other restaurant stock.
+
+### Ingredient records
+
+Each item should support:
+- Name, category, description, and SKU.
+- Base unit and permitted purchase units.
+- Unit conversions.
+- Supplier relationships.
+- Preferred supplier and optional alternative suppliers.
+- Current stock and minimum stock level.
+- Reorder threshold and target quantity.
+- Purchase price history.
+- Average or otherwise explicitly configured inventory valuation.
+- Expiry and batch/lot information when relevant.
+- Photographs and associated documents.
+- Storage location and optional branch restrictions.
+- Status, creation date, modification history, and responsible user.
+
+Support kg, g, litres, millilitres, individual units, and other configurable units.
+
+Use accurate unit conversions and suitable database precision. Store money in integer minor units or another explicitly defined decimal representation. Never use floating-point arithmetic for monetary totals.
+
+### Purchasing
+
+Allow authorized users to record purchases manually or through supported supplier integrations.
+
+A purchase record should capture:
+- Supplier.
+- Items purchased.
+- Quantity and unit.
+- Unit price and total price.
+- Currency, taxes, discounts, and other costs where applicable.
+- Purchase date and delivery date.
+- Receipt or invoice photograph.
+- Invoice reference.
+- Payment status when recorded.
+- Branch and purchasing employee.
+- Notes, approval status, and audit history.
+
+Support purchase drafts, purchase orders, partial deliveries, received purchases, rejected deliveries, and corrections.
+
+**Purchasing and receiving stock must be separate, explicit operations.** Creating an order must not automatically increase usable stock. Receiving a delivery must create inventory movements exactly once. Use transactions, idempotency protections, and appropriate permissions.
+
+### Inventory ledger
+
+Implement a reliable inventory movement ledger rather than allowing arbitrary stock edits without traceability.
+
+Record:
+- Opening balances.
+- Receipts.
+- Sales or consumption.
+- Transfers between branches.
+- Waste.
+- Stocktake adjustments.
+- Returns.
+- Corrections and reversals.
+
+Show both current balances and historical movements. Corrections must retain the original audit information.
+
+Add expiry notifications, low-stock alerts, abnormal-consumption alerts, and stocktake workflows.
+
+### Inventory analytics
+
+Display:
+- Current quantities and estimated inventory value.
+- Purchases by supplier and item.
+- Purchase spending by week, month, branch, and category.
+- Historical price changes.
+- Low-stock items.
+- Expiring and expired items.
+- Recorded waste and its cost.
+- Usage rates when supported by sufficient reliable data.
+
+Never claim exact stock accuracy where the underlying information consists only of manual estimates.
+
+## 6. Suppliers, recipes, and food-cost management
+
+Implement supplier profiles, contact details, product catalogs, purchase histories, documents, and supplier-specific pricing.
+
+Support recipe management with:
+- Menu item or dish.
+- Ingredients and quantities.
+- Preparation yield and portion size.
+- Ingredient cost at a documented price basis.
+- Estimated cost per serving.
+- Selling price and estimated food-cost percentage.
+- Version history for recipe changes.
+
+Where reliable sales records and recipe quantities exist, calculate expected ingredient consumption from completed sales.
+
+Compare expected consumption against recorded inventory and stocktake results. Clearly label estimates and discrepancies.
+
+Never treat expected theoretical consumption as a verified physical measurement.
+
+## 7. Receipt and invoice AI extraction
+
+Allow users to photograph or upload receipts and invoices.
+
+Implement a genuine image/document processing workflow that can extract, when available:
+- Supplier name.
+- Date and invoice reference.
+- Items.
+- Quantities and units.
+- Unit prices.
+- Taxes, discounts, and totals.
+- Currency.
+
+The AI must return structured data validated against a defined schema.
+
+Show a review screen with the original document and extracted fields side by side. Users must be able to correct errors before saving.
+
+Never silently convert a model's guesses into approved purchase records. Check that extracted totals reconcile where possible, flag inconsistencies, and prevent unintended duplicate invoice imports.
+
+Store original files privately and restrict access through organization-level authorization.
+
+If OCR or vision services require paid credentials, provide a real provider configuration interface and clear usage limits. Do not silently substitute fabricated extraction results.
+
+## 8. Tips and team statistics
+
+Implement real tip recording and reporting.
+
+Record:
+- Tip amount and currency.
+- Date and shift.
+- Branch.
+- Associated employee or team.
+- Payment method where known.
+- Source and recording user.
+- Notes and correction history.
+- Approval status where required.
+
+Provide totals by shift, day, week, month, branch, and employee, with filters and exports.
+
+Support configurable tip-pooling and distribution rules, with a preview and approval process before recording a distribution.
+
+Make clear distinctions between:
+- Tips collected.
+- Tips allocated.
+- Tips paid out.
+- Tips still awaiting distribution.
+
+Never infer actual tips from sales totals. Never alter historical tip records without an audit trail.
+
+Keep the software configurable to the restaurant's own policies and applicable local requirements. Do not present tip reporting as a complete payroll or tax compliance system.
+
+## 9. Staff and workforce operations
+
+Implement employee profiles, invitations, roles, branch memberships, task assignments, and work-related records.
+
+Provide optional shift scheduling, attendance records, leave requests, and handovers if supported by the final scope and local requirements.
+
+Include:
+- Weekly scheduling views.
+- Conflict warnings.
+- Role-aware task assignment.
+- Staff notifications.
+- Shift notes.
+- Check-in/check-out records if enabled.
+- Manager approval workflows.
+- Change history and reporting.
+
+Require appropriate authorization for sensitive employee information.
+
+Keep features such as location tracking or biometric attendance out of scope unless separately justified and implemented with proper consent, safeguards, and legal review.
+
+## 10. Customer relationship management
+
+Create a searchable customer directory with unique internal customer IDs.
+
+Customer records may contain:
+- Name and contact details.
+- Consent and communication preferences.
+- Recorded visits or orders.
+- Reservation history.
+- Feedback and review references.
+- Staff notes with access restrictions.
+- Customer lifetime spending where complete, authorized sales data supports it.
+- Last interaction and relevant follow-up reminders.
+
+Deduplicate records carefully. Provide authorized editing, correction, export, deletion, and retention workflows.
+
+Track repeat visits and customer counts from actual recorded visits, reservations with appropriate status, POS records, or verified integrations.
+
+Distinguish customers, orders, reservations, and individual visits. Do not equate these measurements.
+
+Do not infer total physical foot traffic from online reviews. Mark the source of each customer metric.
+
+Do not collect unnecessary personal information or provide uncontrolled access to contact details.
+
+## 11. Reviews and reputation management
+
+Build a unified review workspace for the external platforms the restaurant is authorized to connect.
+
+Start with a real Google Business Profile integration where account permissions, API access, and applicable terms allow it.
+
+Implement:
+- Secure account connection and authorization.
+- Location mapping.
+- Review synchronization.
+- Rating, review text, author information when available, timestamp, and source.
+- Review filters and search.
+- Sentiment and recurring-topic analysis.
+- Suggested review responses.
+- Response status tracking.
+- Manager notifications for important reviews.
+- Review trends and historical reporting.
+- Synchronization logs and retry handling.
+
+Use the provider's supported APIs and official authorization flows. Respect applicable platform policies and API limits.
+
+Do not scrape private information or bypass platform access controls.
+
+AI may draft replies, but an authorized human must approve public replies by default. Automatic publishing may only be enabled explicitly by an appropriately authorized owner and must remain auditable.
+
+If an external platform requires approval or credentials, provide a clear, functional connection workflow and status display. Never populate the review inbox with fabricated reviews.
+
+## 12. Internal communication, meetings, and tasks
+
+### Group chat
+
+Implement real-time internal communication with:
+- Restaurant and branch channels.
+- Team and department channels.
+- Private conversations where authorized.
+- Message history.
+- File attachments.
+- Read states or unread counts.
+- Search.
+- Notifications.
+- Membership controls.
+- Message editing/deletion rules with an audit policy appropriate to the product.
+
+Enforce access restrictions on both messages and attachments.
+
+### Meetings
+
+Provide a meeting calendar and management workspace.
+
+Support:
+- Meeting title and description.
+- Participants.
+- Date, time, timezone, and location or meeting link.
+- Agenda.
+- Preparation notes.
+- Meeting notes.
+- Decisions.
+- Assigned action items.
+- Due dates.
+- Reminders and follow-ups.
+
+### Tasks
+
+Create an organization-wide task management system with statuses, priorities, assignees, due dates, comments, attachments, and completion history.
+
+Tasks should be linkable to inventory issues, reviews, meetings, opening and closing procedures, supplier issues, and other operational records.
+
+A completed meeting action should be capable of becoming a persistent assigned task, rather than merely appearing in a generated summary.
+
+## 13. Daily operating checklists
+
+Implement configurable opening, closing, cleaning, equipment, handover, and branch inspection checklists.
+
+Support:
+- Recurring schedules.
+- Responsible roles.
+- Required checklist items.
+- Optional photographs and notes.
+- Time of completion.
+- Assigned employee.
+- Outstanding items.
+- Manager review for selected procedures.
+
+Record completion persistently and display overdue procedures.
+
+Checklists should be configurable to the restaurant's actual needs rather than presented as universal safety or regulatory certification.
+
+## 14. Sales, POS, tables, and reservations
+
+### POS and sales integration
+
+Support real sales records through:
+- Supported point-of-sale API integrations where available.
+- Authenticated imports.
+- Validated CSV imports.
+- Manual entry for appropriate records.
+
+Use a provider-adapter architecture so further POS integrations can be added without rewriting the core system.
+
+Record order identifiers, items, quantities, prices, discounts, applicable taxes, payment status when available, timestamps, branch, and source.
+
+Prevent duplicate imports using provider IDs and idempotency keys.
+
+Never claim a POS provider is connected before real data has been synchronized successfully.
+
+### Table and reservation management
+
+Implement:
+- Branch-specific tables and capacity.
+- Reservation calendar.
+- Customer or party details appropriate to the reservation.
+- Date, time, party size, and duration.
+- Confirmation and cancellation states.
+- Table assignment.
+- Special requests.
+- Availability checking.
+- Booking reminders.
+- Change history.
+
+Use branch-specific timezones and handle conflicting bookings and unavailable tables consistently.
+
+Public reservation forms must validate input and use appropriate abuse protection. Sending confirmations requires a working email or messaging integration.
+
+Make integrations optional but real. If no external POS or booking credentials are configured, manual workflows must work honestly.
+
+## 15. AI restaurant operations assistant
+
+Build a central conversational AI interface available to authorized users throughout the application.
+
+It must answer questions about the restaurant's actual stored business data and, where authorized, initiate operational actions.
+
+Example questions:
+- How much flour did we purchase this month?
+- How many kilograms of each ingredient are currently recorded in stock?
+- What did we spend on supplies last week?
+- Which suppliers increased their prices the most?
+- How much in tips was collected yesterday?
+- How much remains to be distributed?
+- How many completed customer visits did we record this month?
+- Which dishes have the highest estimated ingredient costs?
+- What are the most frequent complaints in our reviews?
+- Which ingredients need reordering?
+- Which tasks are overdue?
+- What was decided at the last team meeting?
+- Summarize this branch's performance compared with the previous month.
+- Prepare a purchase list based on reorder thresholds.
+- Draft a response to this customer review.
+- Create follow-up tasks from these meeting notes.
+
+### AI architecture
+
+Use a server-side provider abstraction so the platform can use a suitable AI API without coupling its business logic to one model vendor.
+
+Allow the platform administrator to configure supported models, usage limits, and cost controls.
+
+Implement tool-based actions for authorized operations such as creating tasks, preparing drafts, and generating purchase suggestions.
+
+### Data integrity rules
+
+The AI must:
+- Query real data through controlled server-side functions.
+- Respect the requesting user's organization, branch, and role permissions.
+- Use parameterized queries and a tightly controlled set of query tools or database views.
+- Never receive unrestricted database administrator credentials.
+- Distinguish zero from missing or incomplete data.
+- State relevant periods, currencies, units, and calculation methods.
+- Provide links or references to underlying records whenever useful.
+- Show when a value is estimated rather than directly measured.
+- Refuse to invent missing totals or claim integrations provide data that they do not.
+- Ask for confirmation before consequential changes.
+- Record consequential AI-initiated actions in the audit trail.
+- Apply rate limits and protect against prompt injection from untrusted uploaded documents, messages, reviews, and other external text.
+
+Never implement arbitrary model-generated SQL execution with privileged database access.
+
+### AI usage and cost controls
+
+Implement:
+- Monthly usage quotas by subscription plan.
+- Request and token accounting when available.
+- Configurable limits and rate limits.
+- Usage dashboards.
+- Error handling and budget alerts.
+- Graceful behavior when the provider is unavailable.
+- Optional support for customer-provided API credentials if safely designed.
+
+Never advertise the service as having unlimited free AI usage when the provider charges for inference. Do not include third-party API keys in client-side bundles.
+
+## 16. Workflow automation engine
+
+Create a real, configurable automation engine for common restaurant operations.
+
+Support clearly defined triggers, conditions, and actions.
+
+Possible triggers:
+- Stock falls below its threshold.
+- A product is approaching expiry.
+- A purchase is received.
+- A review arrives.
+- A task becomes overdue.
+- A reservation is approaching.
+- A meeting is scheduled.
+- A checklist is incomplete.
+- A billing payment fails.
+
+Possible actions:
+- Create a task.
+- Notify an authorized person.
+- Prepare a purchase list.
+- Generate a review-reply draft.
+- Create a report.
+- Schedule a reminder.
+- Request managerial approval.
+
+Implement execution history, retry policies, idempotency, failure visibility, and limits to avoid runaway loops.
+
+Any action that sends public messages, changes financial records, places an order, or has another consequential effect must use appropriate approval and authorization.
+
+Never promise fully automatic external actions unless the necessary API permissions and integrations are genuinely available.
+
+## 17. Notifications
+
+Implement an in-app notification center with persistent unread states, preferences, and links to the relevant records.
+
+Support configured email notifications and browser push notifications where supported and authorized.
+
+Examples:
+- Low stock.
+- New reviews.
+- Overdue tasks.
+- Upcoming meetings.
+- Reservation changes.
+- Receipt extraction requiring review.
+- Failed imports.
+- Subscription payment failures.
+- Approaching usage limits.
+
+Provide notification preferences by role and event. Avoid duplicate messages and rate-limit noisy notifications.
+
+If an email provider or push configuration is missing, surface the setup requirement honestly. In-app notifications must still work.
+
+## 18. Reporting and analytics
+
+Build a reporting system backed by actual database queries.
+
+Provide reports for:
+- Purchasing and expenses.
+- Ingredient usage.
+- Inventory valuation.
+- Stock adjustments and waste.
+- Supplier pricing.
+- Tip collection and distribution.
+- Sales and recorded orders.
+- Customers and visits.
+- Reservations.
+- Reviews and ratings.
+- Staff tasks and checklist completion.
+- AI usage.
+- Subscription and workspace activity where authorized.
+
+Include date ranges, branch filters, category filters, export options, and appropriate comparisons.
+
+Implement CSV and PDF exports using server-authorized queries.
+
+Use consistent definitions for each KPI. Every dashboard figure must be derived from its underlying records and have an understandable date range and calculation method.
+
+Never fill empty dashboards with fictional metrics. Provide properly labeled empty states until real records exist.
+
+## 19. Restaurant website builder and custom website service
+
+Offer two related services.
+
+### A. Self-service restaurant website builder
+
+Allow an authorized restaurant owner to create and manage its public restaurant website.
+
+Support:
+- Restaurant branding.
+- Logo and photographs.
+- Homepage and about page.
+- Menu pages.
+- Opening hours.
+- Address and maps.
+- Contact information.
+- Social links.
+- Reservation or enquiry forms.
+- SEO titles and descriptions.
+- Mobile-responsive templates.
+- Published and draft states.
+- Custom-domain configuration.
+- Preview before publishing.
+- Forms protected against spam.
+
+The website must use actual restaurant content. Form submissions must reach the authorized restaurant workspace, and publishing must be genuinely connected to the deployment architecture.
+
+Support appropriate tenant-to-domain mapping and domain ownership verification. A custom domain must not become available merely because someone entered it in a text field.
+
+### B. Professionally built custom websites
+
+Create an authenticated request workflow for custom website services.
+
+Capture the restaurant's requirements, branding, menu, references, scope, desired features, domain needs, expected delivery requirements, and approval status.
+
+Allow the platform administrator to manage requests, quotes, payment status, revisions, and delivery.
+
+Ultra subscribers receive the included custom website service as described by the active plan terms. Define the included scope and revision limit in configuration.
+
+Custom website projects outside that allowance require a separately accepted quote and genuine payment confirmation when online payment is enabled.
+
+Support a client review and approval process before publishing. Never promise a custom domain, external software subscription, or unlimited bespoke development as free unless it is explicitly included in the approved service agreement.
+
+## 20. Subscription plans and entitlement enforcement
+
+Implement four configurable plans.
+
+### Free
+- Essential restaurant workspace.
+- Basic inventory and purchase recording.
+- Limited users, records, branches, attachments, and historical reporting.
+- Core operational capabilities within published limits.
+- Limited AI allowance only when a working AI provider is configured.
+
+### Pro
+- Expanded inventory and purchasing.
+- Team communication and meetings.
+- Customer and review management.
+- Tip reporting.
+- Operational reports.
+- Additional automation and AI allowance.
+- Appropriate user and storage limits.
+
+### Business
+- Everything in Pro.
+- Expanded team and branch capacity.
+- Consolidated multi-location reports.
+- Advanced operational analytics.
+- More automation capacity.
+- Higher AI allowances and configurable integration limits.
+
+### Ultra
+- All applicable Business capabilities.
+- Highest configurable usage allowances.
+- Advanced automation and reporting.
+- Priority support features where genuinely provided.
+- One custom-built restaurant website within the published service scope.
+
+Plan features and prices must be editable from a secure platform administrator dashboard.
+
+Do not invent the owner's prices. Allow the administrator to define the billing currency, monthly and annual prices, included quantities, usage quotas, website entitlements, trial policies, and other relevant limits before enabling a plan for purchase.
+
+For a Morocco-first launch, support MAD as a business reporting currency and make other currencies configurable. Store the original currency of every monetary record and never silently add amounts from different currencies without conversion rules.
+
+### Enforcement
+
+Enforce subscriptions and quotas in trusted server-side code and database policies where appropriate. Hiding a UI component is not an entitlement check.
+
+Support:
+- Plan upgrades and downgrades.
+- Cancellation.
+- Renewal status.
+- Failed payments.
+- Configurable grace periods.
+- Trial expiry when enabled.
+- Invoices or receipts.
+- Customer billing management.
+- Subscription history.
+- Accurate plan changes and prorations where the billing provider supports them.
+- Clear access behavior when a subscription expires.
+
+Do not delete a customer's business records because a subscription expires. Implement the published access and retention rules.
+
+## 21. Real payment and subscription integration — mandatory
+
+**This is a critical business requirement. Build a genuine recurring-payment system that can charge real customers and settle eligible proceeds to the owner's verified payout destination. Do not substitute a visual checkout or fake payment handler.**
+
+### Stage A: verify the provider before committing
+
+Research current official payment-provider documentation and select a provider that supports all of the following:
+
+1. Merchants legally operating from the owner's actual country and business situation.
+2. The platform's intended SaaS subscription business model.
+3. Customers paying with supported debit and credit cards.
+4. Real recurring subscriptions and renewals.
+5. Plan changes, cancellations, refunds, and payment-failure events as supported.
+6. Proper webhook verification.
+7. A compliant payout route available to the owner.
+8. The payout destination's actual country, account type, currency, account-holder name, and receiving rails.
+
+Evaluate a Merchant of Record provider such as Lemon Squeezy as a candidate, and verify its current documentation and merchant approval requirements before selecting it. Compare another eligible provider if necessary.
+
+Do not assume Stripe can be opened directly for a Morocco-based business simply because Stripe supports international customers. Verify supported merchant countries and applicable account rules.
+
+### Stage B: verify Rizon payout compatibility
+
+The owner wants subscription proceeds available in their Rizon account and spendable through their Rizon Visa card.
+
+Verify the following against current provider terms and the actual account details visible to the owner:
+
+- Whether the selected processor supports payouts to the owner's Rizon-provided account details.
+- Whether those details are accepted for the owner's merchant country and account type.
+- Whether the relevant receiving method is ACH, SEPA, another supported bank-transfer rail, or something else.
+- Whether the payment provider accepts the account-holder name and settlement currency.
+- Whether Rizon's receiving terms and the payment provider's payout policies permit the intended commercial revenue.
+- Applicable withdrawal, conversion, transfer, and settlement fees.
+- Settlement timing, payout minimums, account verification, and any account restrictions.
+
+**Do not treat a card number as a bank payout account.** Customer card charges should be processed by the subscription provider. The provider then settles eligible proceeds through its approved payout mechanism. Use Rizon's actual receiving details only if the chosen provider accepts them; never route money through an unsupported or misrepresented account.
+
+If compatibility cannot be conclusively established from documentation and actual onboarding, clearly flag the remaining verification requirement. Offer a compliant, supported alternative payout route without falsely claiming the funds will arrive in Rizon.
+
+Never bypass identity verification, age requirements, business eligibility, geographic restrictions, or financial-service terms.
+
+### Stage C: implement real checkout
+
+After selecting an eligible provider:
+
+- Create genuine products, plans, and price identifiers in the provider dashboard.
+- Store the associated server-side configuration securely.
+- Generate checkout sessions on the backend for the correct plan.
+- Associate checkout sessions with the authenticated user, organization, plan, and intended billing interval.
+- Redirect customers to the provider's secure checkout or use its officially supported payment interface.
+- Never expose private API keys or handle raw card numbers or CVCs directly.
+- Include correct return and cancellation routes.
+- Verify successful checkout using authenticated provider events, not the browser redirect alone.
+- Persist provider customer IDs, subscription IDs, transaction IDs, and relevant billing status.
+- Implement the provider's documented webhook-signature verification.
+- Make event processing idempotent and safe under retries or out-of-order delivery.
+- Handle successful payments, renewals, failures, cancellations, plan changes, refunds, and other supported lifecycle events.
+- Update subscription entitlements only after verified server-side evidence.
+- Provide a customer billing portal where supported.
+- Display useful payment status and troubleshooting messages.
+
+A user visiting a success URL must never be sufficient evidence that money has been received.
+
+### Stage D: admin billing operations
+
+Provide:
+- Plan and price configuration.
+- Provider connection status.
+- Test and live configuration status.
+- Product and price mapping.
+- Webhook health.
+- Recent billing events.
+- Subscription lookup.
+- Failed-payment visibility.
+- Refund status where supported.
+- Payout setup status and documented external dependencies.
+
+Use actual provider identifiers and supported APIs. If the provider has not approved the account or the required credentials are unavailable, show a clear configuration blocker.
+
+Do not fabricate transactions, receipts, provider accounts, verification badges, or payout confirmations.
+
+### Stage E: production release
+
+Use the payment provider's sandbox/test environment first. Verify subscription creation, webhook processing, access entitlements, renewals where testable, failure handling, cancellation, and refunds where supported.
+
+Then prepare a separate production configuration and deployment procedure.
+
+Production must remain explicitly unactivated until genuine credentials, required approvals, legal eligibility, provider configuration, webhook deployment, and a successful live validation are complete.
+
+The user must be told exactly which external account setup remains necessary. Do not store an owner's card number or payout credentials in application code. Never claim a real transaction was tested if no transaction actually occurred.
+
+## 22. AI, billing, and website cost management
+
+Provide the platform operator with visibility into usage and estimated third-party costs.
+
+Track AI usage, storage usage, email usage, website usage where measurable, and relevant billing events.
+
+Set enforceable limits and rate controls for each plan.
+
+Do not promise permanently free hosting, unlimited AI, unlimited storage, unlimited email, free custom domains, or zero payment-processing fees.
+
+Design the initial deployment to use eligible free tiers where commercially permitted and technically adequate. Document free-tier limits, inactivity behavior, service restrictions, backups, and the conditions under which paid infrastructure is required.
+
+Free-tier-first does not mean accepting unacceptable data-loss risk for paying restaurants.
+
+## 23. Installable mobile app and offline workflows
+
+Build the web application as a Progressive Web App where the chosen stack supports it reliably.
+
+Provide:
+- Installability on supported devices.
+- Appropriate icons and manifest.
+- Responsive touch-friendly screens.
+- Clear online/offline state.
+- A controlled cache strategy.
+- Safe retry handling.
+
+For supported offline workflows, allow users to draft inventory counts, checklist results, and other explicitly approved operations locally.
+
+Use a persistent local operation queue with unique IDs, synchronization status, retries, and conflict resolution. Use optimistic updates only when their state is clearly represented.
+
+Handle duplicate operations, conflicts, stale data, and failed synchronization. Do not claim a server write succeeded before the server confirms it.
+
+Do not cache sensitive customer, chat, or financial records indiscriminately. Clear sensitive local data appropriately after logout or account changes.
+
+## 24. Data model and audit history
+
+Design a normalized relational schema with migrations for the core entities, including:
+
+- Users and profiles.
+- Organizations and restaurant groups.
+- Branches and memberships.
+- Roles and permissions.
+- Subscription plans and entitlements.
+- Customers, visits, and consent records.
+- Suppliers, ingredients, and inventory.
+- Purchases, orders, receipts, and receipt line items.
+- Inventory lots and movements.
+- Recipes and menu items.
+- Tips and distributions.
+- Employees, schedules, tasks, and checklists.
+- Reviews and integration mappings.
+- Meetings, messages, and attachments.
+- POS orders and reservations.
+- Notifications and automation rules.
+- Automation execution logs.
+- AI conversations and relevant usage records.
+- Websites, domains, and custom website projects.
+- Provider integrations and synchronization cursors.
+- Subscriptions, billing events, and provider references.
+- Security and administrative audit events.
+
+Do not expose every possible field to every client. Use explicit data-access rules and query only what is needed.
+
+Use transactions for operations that require multiple records to change together.
+
+For historical records, preserve the original values needed to explain previous transactions. Use reversible correction records where appropriate instead of destructive edits.
+
+### Backups and recovery
+
+Provide an actual backup and restoration strategy appropriate to the selected services and commercial risk.
+
+Verify which backup features are available on the deployed plan. If automatic backups require paid infrastructure, document the dependency and provide the appropriate configuration or an explicitly verified alternative.
+
+Test restoration procedures where the environment permits it.
+
+Do not describe a backup procedure as operational until it has been configured and verified.
+
+## 25. Privacy, security, and legal readiness
+
+Implement security and privacy by design.
+
+Requirements include:
+- Strict tenant and branch isolation.
+- Authentication and authorization checks.
+- Secure secret management.
+- Input validation and output encoding.
+- Appropriate CSRF protection where relevant.
+- Rate limiting and abuse protection.
+- Safe file-upload validation and access restrictions.
+- Webhook signature verification.
+- Audit logging for sensitive operations.
+- Appropriate security headers.
+- Dependency and vulnerability checks.
+- Secure error messages that do not leak secrets.
+- Data export, correction, and deletion workflows.
+- Configurable retention policies.
+- Consent and communication preferences.
+- Minimal collection of personal data.
+
+Review applicable Moroccan and international privacy, consumer, tax, invoicing, and electronic-commerce requirements for the actual launch jurisdictions. Identify what requires specialist review instead of claiming legal compliance without verification.
+
+Ensure AI processing and external integrations disclose relevant data sharing and follow appropriate permissions.
+
+## 26. Public marketing website
+
+Build a professional public website that accurately explains the product and encourages restaurant owners to register.
+
+Include:
+- Homepage with a clear value proposition.
+- Real feature pages.
+- Pricing page reflecting configured plans.
+- Feature comparison table.
+- Genuine registration and login.
+- Product screenshots only from the actual application.
+- Contact and support routes.
+- FAQs.
+- Privacy policy and terms routes with appropriately reviewed content.
+- Billing and cancellation information.
+- Responsive design and SEO fundamentals.
+
+Clearly distinguish implemented features, optional integrations, and features requiring additional service setup.
+
+Never invent customer testimonials, adoption numbers, awards, certifications, or integration partnerships.
+
+## 27. Platform administrator dashboard
+
+Build a protected platform administration area with:
+
+- Organization and branch overview.
+- User and membership administration.
+- Plan and entitlement management.
+- Usage and cost dashboards.
+- Subscription status and billing-event visibility.
+- Integration configuration and health.
+- Custom website project management.
+- Support and incident workflows.
+- Automation and notification health.
+- Audit logs.
+- Service configuration.
+- Graceful account suspension and recovery controls.
+
+Only authorized administrators may access platform-level controls. Important administrative actions must be logged.
+
+Never provide a hidden unauthenticated admin route or a universal hardcoded administrator password.
+
+## 28. Testing requirements
+
+Write and execute tests for the actual implementation.
+
+### Unit tests
+
+Cover:
+- Monetary calculations.
+- Unit conversions.
+- Inventory valuation.
+- Stock movements.
+- Purchase totals.
+- Tip totals and distribution.
+- Recipe costing.
+- Subscription entitlement rules.
+- Date-range and timezone calculations.
+- AI response schema validation.
+
+### Integration tests
+
+Cover:
+- Database transactions.
+- Authentication and organization memberships.
+- Row Level Security.
+- File permissions.
+- Purchase receiving.
+- Inventory changes.
+- Data imports and duplicate prevention.
+- Notification delivery state.
+- Automation retries.
+- Subscription webhook handling.
+- AI tool authorization.
+- Reporting accuracy.
+
+### End-to-end tests
+
+Test complete workflows in a realistic browser environment.
+
+At minimum:
+1. Register a restaurant and verify its account.
+2. Invite and authorize an employee.
+3. Create an ingredient.
+4. Record a purchase with quantity, cost, supplier, and receipt.
+5. Receive stock and verify the inventory balance increases exactly once.
+6. Correct a stock discrepancy with an audit record.
+7. Record tips and verify period totals.
+8. Add a customer and record a visit.
+9. Connect or properly simulate an official provider sandbox integration, with sandbox data visibly distinguished.
+10. Generate and review an AI receipt extraction.
+11. Ask the AI for a real purchase total and verify it against database fixtures.
+12. Create a meeting and assign a follow-up task.
+13. Verify that one restaurant cannot retrieve another restaurant's records.
+14. Import POS data without duplicate orders.
+15. Create and cancel a reservation.
+16. Export a report.
+17. Verify subscription entitlements against verified billing events.
+18. Exercise failed-payment and cancellation states.
+19. Build a website draft and verify publication permissions.
+20. Test offline synchronization and conflict handling where supported.
+
+No test may be marked successful merely because its expected result was hardcoded.
+
+For payment-provider tests, use official sandbox functionality. Do not fake a provider signature or claim that test transactions are real-money transactions.
+
+## 29. Performance, accessibility, and reliability
+
+Implement:
+- Server-side filtering and pagination for large tables.
+- Indexed queries for frequently accessed records.
+- Appropriate caching without cross-tenant data leakage.
+- Optimized image uploads and thumbnails.
+- Lazy loading for noncritical UI modules.
+- Useful loading states and error boundaries.
+- Accessible keyboard navigation and form validation.
+- Appropriate mobile table layouts.
+- Timeouts and retries for external integrations.
+- Rate limits and operational alerts.
+- Observability for failed jobs and webhooks.
+
+Set realistic performance targets, measure them, and optimize the actual bottlenecks. Do not report a target as achieved without measurement.
+
+## 30. Deployment and free-tier constraints
+
+Prepare a genuine production deployment using eligible services.
+
+Use:
+- A version-controlled repository.
+- Environment-specific configuration.
+- A secure production database.
+- Database migrations.
+- Correct production environment variables.
+- Automated tests before deployment.
+- A deployment workflow with visible failure handling.
+- Custom-domain and DNS documentation.
+- HTTPS.
+- Backup and recovery documentation.
+- Monitoring and incident instructions.
+- Billing and webhook health checks.
+
+Prefer a free-tier-first architecture, but verify current usage quotas, commercial terms, feature availability, limits, and inactivity behavior against official documentation before choosing providers.
+
+Never expose an internal database URL, service-role key, private payment key, AI provider key, or other secret in client bundles or public files.
+
+Deliver a working deployment whenever the available repository, accounts, credentials, and permissions make that possible. If deployment is blocked by an unavailable account or secret, complete all possible implementation work and provide the exact remaining action without pretending deployment succeeded.
+
+## 31. Documentation and handover
+
+Produce and maintain:
+
+- README with setup and deployment instructions.
+- Architecture documentation.
+- Database schema and migration instructions.
+- Environment variable reference.
+- Authentication and permissions documentation.
+- API and integration documentation.
+- Payment-provider setup and verification guide.
+- Rizon payout compatibility findings and required onboarding steps.
+- AI provider configuration and cost-control guide.
+- Backup and restoration procedures.
+- Test commands and actual test results.
+- Deployment instructions.
+- Security and release checklist.
+- Known limitations and blocked external dependencies.
+
+Provide example environment-variable names without publishing real secret values.
+
+The product must be maintainable by another competent developer who has not participated in its initial implementation.
+
+## 32. Definition of done
+
+The project is complete only when the following requirements are satisfied or explicitly identified as blocked by an external prerequisite.
+
+- [ ] The actual application is implemented, not merely designed.
+- [ ] Core modules have working persistent data workflows.
+- [ ] Multi-tenant permissions have been enforced and tested.
+- [ ] Inventory and purchasing calculations are correct.
+- [ ] Tips, customers, staff, and operational records persist correctly.
+- [ ] Reviews and other integrations use real supported APIs when configured.
+- [ ] AI answers are grounded in authorized business records.
+- [ ] AI actions use permission checks and appropriate confirmation.
+- [ ] Communication, meetings, tasks, notifications, and checklists work.
+- [ ] Sales, reservations, receipt extraction, and recipes work within their implemented scope.
+- [ ] Reports and exports use real records.
+- [ ] The website builder and custom website workflow work.
+- [ ] Plans and entitlements are enforced server-side.
+- [ ] Genuine recurring-payment checkout and verified webhooks are implemented.
+- [ ] The payout route has documented compatibility findings; no unsupported Rizon payout is claimed.
+- [ ] Security, functional, integration, and end-to-end tests have been executed.
+- [ ] Deployment, environment configuration, and recovery procedures are documented.
+- [ ] No known critical security defect or known data-integrity failure remains unresolved.
+- [ ] Any unavailable third-party capability or required account approval is explicitly listed.
+
+Do not mark a requirement complete based solely on the presence of a UI component or source file.
+
+## 33. Execution instructions
+
+Begin by inspecting the actual workspace and identifying the repository, available services, framework versions, and existing implementation.
+
+Then proceed in this order:
+
+1. Establish a concise architecture and implementation roadmap.
+2. Verify current documentation for all external providers and select compatible services.
+3. Establish the database schema, migrations, authentication, organization isolation, and permissions.
+4. Implement the reusable design system, onboarding, and primary workspace.
+5. Implement the core business modules and data relationships.
+6. Implement AI tools, workflow automation, and integrations.
+7. Implement plan configuration, real payment checkout, subscription lifecycle processing, and payout verification.
+8. Implement reporting, the website builder, administration, and operational controls.
+9. Execute tests, identify failures, fix them, and run the relevant tests again.
+10. Deploy and verify the actual application wherever the available environment permits.
+11. Complete the documentation and production-readiness review.
+
+Adapt the order when the repository or a verified technical constraint requires it, but preserve the security and data-integrity foundations.
+
+Do not stop for approval after presenting the roadmap. Continue implementation. Ask only when an essential decision genuinely cannot be resolved through reasonable, documented assumptions.
+
+### Final handover report
+
+When finished, provide a concise report containing:
+
+- What was implemented.
+- Which modules were verified end to end.
+- The actual test commands and results.
+- The deployed URL, if deployment genuinely succeeded.
+- The payment provider selected and why.
+- Whether merchant approval and live payments are active.
+- The verified status of the Rizon payout route.
+- Which external credentials, approvals, or setup actions are still required.
+- Any unresolved defects, limitations, or operational risks.
+
+Be exact about the difference between implemented, tested, deployed, and live.
+
+**Final objective:** deliver a professional restaurant operations SaaS that real restaurants can use to manage their operations, a platform administrator can operate and sell subscriptions through, and the owner can maintain and extend. Every claimed capability must be backed by real implementation and appropriate verification. No prototype, no fake functionality, no pretend payments, and no false claims of production readiness.
