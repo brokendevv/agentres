@@ -1,0 +1,674 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'yasserrajeb@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isOrgOwner(orgId) {
+      return isVerifiedUser() &&
+        exists(/databases/$(database)/documents/organizations/$(orgId)) &&
+        get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == request.auth.uid;
+    }
+
+    function isOrgMember(orgId) {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid)) ||
+        isOrgOwner(orgId) ||
+        isAdmin()
+      );
+    }
+
+    function isValidCurrency(c) {
+      return c is string && c.size() == 3 && c in ['MAD', 'USD', 'EUR', 'GBP'];
+    }
+
+    // Validation Blueprints
+    function isValidOrganization(data) {
+      return data.keys().hasAll(['name', 'slug', 'ownerId', 'baseCurrency', 'planId', 'subscriptionStatus', 'timezone', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['name', 'slug', 'ownerId', 'baseCurrency', 'planId', 'subscriptionStatus', 'timezone', 'createdAt', 'updatedAt']) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.slug is string && data.slug.size() >= 2 && data.slug.size() <= 80 && data.slug.matches('^[a-z0-9\\-]+$') &&
+        isValidId(data.ownerId) &&
+        isValidCurrency(data.baseCurrency) &&
+        data.planId is string && data.planId.size() <= 20 && data.planId in ['free', 'pro', 'business', 'ultra'] &&
+        data.subscriptionStatus is string && data.subscriptionStatus.size() <= 20 && data.subscriptionStatus in ['active', 'trialing', 'past_due', 'cancelled', 'expired'] &&
+        data.timezone is string && data.timezone.size() >= 1 && data.timezone.size() <= 64 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidBranch(data, orgId) {
+      return data.keys().hasAll(['orgId', 'name', 'city', 'address', 'timezone', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'name', 'city', 'address', 'timezone', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.city is string && data.city.size() >= 1 && data.city.size() <= 80 &&
+        data.address is string && data.address.size() >= 1 && data.address.size() <= 240 &&
+        data.timezone is string && data.timezone.size() >= 1 && data.timezone.size() <= 64 &&
+        data.status is string && data.status.size() <= 20 && data.status in ['active', 'archived'] &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidMember(data, orgId, userId) {
+      return data.keys().hasAll(['orgId', 'userId', 'displayName', 'role', 'branchId', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'userId', 'displayName', 'role', 'branchId', 'status', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        data.userId == userId && isValidId(data.userId) &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+        data.role is string && data.role.size() <= 20 && data.role in ['owner', 'manager', 'finance', 'inventory', 'foh', 'staff'] &&
+        isValidId(data.branchId) &&
+        data.status is string && data.status.size() <= 20 && data.status in ['active', 'invited', 'suspended'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidIngredient(data, orgId) {
+      return data.keys().hasAll(['orgId', 'branchId', 'name', 'sku', 'category', 'baseUnit', 'currentStockMilli', 'reorderThresholdMilli', 'targetQuantityMilli', 'unitCostMinor', 'currency', 'preferredSupplierId', 'storageLocation', 'updatedBy', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'branchId', 'name', 'sku', 'category', 'baseUnit', 'currentStockMilli', 'reorderThresholdMilli', 'targetQuantityMilli', 'unitCostMinor', 'currency', 'preferredSupplierId', 'storageLocation', 'updatedBy', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        isValidId(data.branchId) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 64 &&
+        data.category is string && data.category.size() <= 30 && data.category in ['produce', 'meat_seafood', 'dairy', 'dry_goods', 'beverage', 'packaging', 'supplies'] &&
+        data.baseUnit is string && data.baseUnit.size() <= 10 && data.baseUnit in ['kg', 'g', 'L', 'mL', 'unit'] &&
+        data.currentStockMilli is int && data.currentStockMilli >= 0 &&
+        data.reorderThresholdMilli is int && data.reorderThresholdMilli >= 0 &&
+        data.targetQuantityMilli is int && data.targetQuantityMilli >= 0 &&
+        data.unitCostMinor is int && data.unitCostMinor >= 0 &&
+        isValidCurrency(data.currency) &&
+        data.preferredSupplierId is string && data.preferredSupplierId.size() >= 1 && data.preferredSupplierId.size() <= 128 &&
+        data.storageLocation is string && data.storageLocation.size() >= 1 && data.storageLocation.size() <= 80 &&
+        isValidId(data.updatedBy) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSupplier(data, orgId) {
+      return data.keys().hasAll(['orgId', 'name', 'category', 'contactName', 'phone', 'email', 'currency', 'paymentTerms', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'name', 'category', 'contactName', 'phone', 'email', 'currency', 'paymentTerms', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+        data.contactName is string && data.contactName.size() >= 1 && data.contactName.size() <= 100 &&
+        data.phone is string && data.phone.size() >= 3 && data.phone.size() <= 40 &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 120 &&
+        isValidCurrency(data.currency) &&
+        data.paymentTerms is string && data.paymentTerms.size() >= 1 && data.paymentTerms.size() <= 80 &&
+        data.status is string && data.status.size() <= 20 && data.status in ['active', 'inactive'] &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPurchase(data, orgId) {
+      return data.keys().hasAll(['orgId', 'branchId', 'supplierId', 'supplierName', 'invoiceRef', 'status', 'subtotalMinor', 'taxMinor', 'discountMinor', 'totalMinor', 'currency', 'purchaseDate', 'notes', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'branchId', 'supplierId', 'supplierName', 'invoiceRef', 'status', 'subtotalMinor', 'taxMinor', 'discountMinor', 'totalMinor', 'currency', 'purchaseDate', 'notes', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        isValidId(data.branchId) &&
+        isValidId(data.supplierId) &&
+        data.supplierName is string && data.supplierName.size() >= 1 && data.supplierName.size() <= 120 &&
+        data.invoiceRef is string && data.invoiceRef.size() >= 1 && data.invoiceRef.size() <= 80 &&
+        data.status is string && data.status.size() <= 20 && data.status in ['draft', 'ordered', 'received', 'rejected'] &&
+        data.subtotalMinor is int && data.subtotalMinor >= 0 &&
+        data.taxMinor is int && data.taxMinor >= 0 &&
+        data.discountMinor is int && data.discountMinor >= 0 &&
+        data.totalMinor is int && data.totalMinor == (data.subtotalMinor + data.taxMinor - data.discountMinor) &&
+        isValidCurrency(data.currency) &&
+        data.purchaseDate is string && data.purchaseDate.size() >= 10 && data.purchaseDate.size() <= 30 &&
+        data.notes is string && data.notes.size() <= 500 &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidStockMovement(data, orgId) {
+      return data.keys().hasAll(['orgId', 'branchId', 'ingredientId', 'ingredientName', 'movementType', 'deltaMilli', 'balanceAfterMilli', 'unitCostMinor', 'referenceId', 'reason', 'createdBy', 'createdAt']) &&
+        data.keys().hasOnly(['orgId', 'branchId', 'ingredientId', 'ingredientName', 'movementType', 'deltaMilli', 'balanceAfterMilli', 'unitCostMinor', 'referenceId', 'reason', 'createdBy', 'createdAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        isValidId(data.branchId) &&
+        isValidId(data.ingredientId) &&
+        data.ingredientName is string && data.ingredientName.size() >= 1 && data.ingredientName.size() <= 120 &&
+        data.movementType is string && data.movementType.size() <= 30 && data.movementType in ['opening', 'receipt', 'consumption', 'transfer', 'waste', 'stocktake_adjustment', 'return', 'correction'] &&
+        data.deltaMilli is int &&
+        data.balanceAfterMilli is int && data.balanceAfterMilli >= 0 &&
+        data.unitCostMinor is int && data.unitCostMinor >= 0 &&
+        data.referenceId is string && data.referenceId.size() >= 1 && data.referenceId.size() <= 128 &&
+        data.reason is string && data.reason.size() >= 1 && data.reason.size() <= 240 &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidRecipe(data, orgId) {
+      return data.keys().hasAll(['orgId', 'dishName', 'category', 'portionsYield', 'estimatedCostMinor', 'sellingPriceMinor', 'currency', 'ingredientsSummary', 'version', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'dishName', 'category', 'portionsYield', 'estimatedCostMinor', 'sellingPriceMinor', 'currency', 'ingredientsSummary', 'version', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        data.dishName is string && data.dishName.size() >= 1 && data.dishName.size() <= 120 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+        data.portionsYield is int && data.portionsYield >= 1 &&
+        data.estimatedCostMinor is int && data.estimatedCostMinor >= 0 &&
+        data.sellingPriceMinor is int && data.sellingPriceMinor >= 0 &&
+        isValidCurrency(data.currency) &&
+        data.ingredientsSummary is string && data.ingredientsSummary.size() >= 1 && data.ingredientsSummary.size() <= 500 &&
+        data.version is int && data.version >= 1 &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidTipRecord(data, orgId) {
+      return data.keys().hasAll(['orgId', 'branchId', 'shiftDate', 'shiftName', 'amountMinor', 'currency', 'paymentMethod', 'status', 'employeeName', 'notes', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'branchId', 'shiftDate', 'shiftName', 'amountMinor', 'currency', 'paymentMethod', 'status', 'employeeName', 'notes', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        isValidId(data.branchId) &&
+        data.shiftDate is string && data.shiftDate.size() >= 10 && data.shiftDate.size() <= 30 &&
+        data.shiftName is string && data.shiftName.size() <= 20 && data.shiftName in ['morning', 'lunch', 'dinner', 'late'] &&
+        data.amountMinor is int && data.amountMinor >= 0 &&
+        isValidCurrency(data.currency) &&
+        data.paymentMethod is string && data.paymentMethod.size() <= 20 && data.paymentMethod in ['cash', 'card', 'pooled'] &&
+        data.status is string && data.status.size() <= 20 && data.status in ['collected', 'allocated', 'paid_out'] &&
+        data.employeeName is string && data.employeeName.size() >= 1 && data.employeeName.size() <= 100 &&
+        data.notes is string && data.notes.size() <= 300 &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCustomer(data, orgId) {
+      return data.keys().hasAll(['orgId', 'fullName', 'phone', 'email', 'marketingConsent', 'recordedVisits', 'lifetimeSpendMinor', 'currency', 'dietaryNotes', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'fullName', 'phone', 'email', 'marketingConsent', 'recordedVisits', 'lifetimeSpendMinor', 'currency', 'dietaryNotes', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 120 &&
+        data.phone is string && data.phone.size() >= 3 && data.phone.size() <= 40 &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 120 &&
+        data.marketingConsent is bool &&
+        data.recordedVisits is int && data.recordedVisits >= 0 &&
+        data.lifetimeSpendMinor is int && data.lifetimeSpendMinor >= 0 &&
+        isValidCurrency(data.currency) &&
+        data.dietaryNotes is string && data.dietaryNotes.size() <= 300 &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidReservation(data, orgId) {
+      return data.keys().hasAll(['orgId', 'branchId', 'guestName', 'guestPhone', 'partySize', 'tableCode', 'reservationStart', 'durationMinutes', 'status', 'specialRequests', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'branchId', 'guestName', 'guestPhone', 'partySize', 'tableCode', 'reservationStart', 'durationMinutes', 'status', 'specialRequests', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        isValidId(data.branchId) &&
+        data.guestName is string && data.guestName.size() >= 1 && data.guestName.size() <= 120 &&
+        data.guestPhone is string && data.guestPhone.size() >= 3 && data.guestPhone.size() <= 40 &&
+        data.partySize is int && data.partySize >= 1 && data.partySize <= 100 &&
+        data.tableCode is string && data.tableCode.size() >= 1 && data.tableCode.size() <= 32 &&
+        data.reservationStart is string && data.reservationStart.size() >= 10 && data.reservationStart.size() <= 40 &&
+        data.durationMinutes is int && data.durationMinutes >= 15 && data.durationMinutes <= 480 &&
+        data.status is string && data.status.size() <= 20 && data.status in ['confirmed', 'seated', 'completed', 'cancelled', 'no_show'] &&
+        data.specialRequests is string && data.specialRequests.size() <= 300 &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidTask(data, orgId) {
+      return data.keys().hasAll(['orgId', 'branchId', 'title', 'category', 'priority', 'status', 'assigneeName', 'dueDate', 'linkedRecordId', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'branchId', 'title', 'category', 'priority', 'status', 'assigneeName', 'dueDate', 'linkedRecordId', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        isValidId(data.branchId) &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+        data.category is string && data.category.size() <= 30 && data.category in ['opening', 'closing', 'inventory', 'meeting_followup', 'review_followup', 'maintenance'] &&
+        data.priority is string && data.priority.size() <= 20 && data.priority in ['low', 'medium', 'high', 'urgent'] &&
+        data.status is string && data.status.size() <= 20 && data.status in ['todo', 'in_progress', 'completed'] &&
+        data.assigneeName is string && data.assigneeName.size() >= 1 && data.assigneeName.size() <= 100 &&
+        data.dueDate is string && data.dueDate.size() >= 10 && data.dueDate.size() <= 30 &&
+        data.linkedRecordId is string && data.linkedRecordId.size() <= 128 &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidMeeting(data, orgId) {
+      return data.keys().hasAll(['orgId', 'branchId', 'title', 'scheduledAt', 'agenda', 'decisions', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'branchId', 'title', 'scheduledAt', 'agenda', 'decisions', 'status', 'createdBy', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        isValidId(data.branchId) &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+        data.scheduledAt is string && data.scheduledAt.size() >= 10 && data.scheduledAt.size() <= 40 &&
+        data.agenda is string && data.agenda.size() >= 1 && data.agenda.size() <= 1000 &&
+        data.decisions is string && data.decisions.size() <= 1000 &&
+        data.status is string && data.status.size() <= 20 && data.status in ['scheduled', 'completed', 'cancelled'] &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidChatMessage(data, orgId) {
+      return data.keys().hasAll(['orgId', 'channel', 'senderId', 'senderName', 'text', 'createdAt']) &&
+        data.keys().hasOnly(['orgId', 'channel', 'senderId', 'senderName', 'text', 'createdAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        data.channel is string && data.channel.size() <= 30 && data.channel in ['general', 'kitchen', 'front_of_house', 'managers', 'purchasing'] &&
+        isValidId(data.senderId) &&
+        data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 100 &&
+        data.text is string && data.text.size() >= 1 && data.text.size() <= 1000 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidPosOrder(data, orgId) {
+      return data.keys().hasAll(['orgId', 'branchId', 'externalOrderId', 'source', 'itemsSummary', 'totalMinor', 'taxMinor', 'currency', 'orderDate', 'createdBy', 'createdAt']) &&
+        data.keys().hasOnly(['orgId', 'branchId', 'externalOrderId', 'source', 'itemsSummary', 'totalMinor', 'taxMinor', 'currency', 'orderDate', 'createdBy', 'createdAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        isValidId(data.branchId) &&
+        data.externalOrderId is string && data.externalOrderId.size() >= 1 && data.externalOrderId.size() <= 80 &&
+        data.source is string && data.source.size() <= 20 && data.source in ['manual', 'csv_import', 'pos_webhook'] &&
+        data.itemsSummary is string && data.itemsSummary.size() >= 1 && data.itemsSummary.size() <= 500 &&
+        data.totalMinor is int && data.totalMinor >= 0 &&
+        data.taxMinor is int && data.taxMinor >= 0 &&
+        isValidCurrency(data.currency) &&
+        data.orderDate is string && data.orderDate.size() >= 10 && data.orderDate.size() <= 40 &&
+        isValidId(data.createdBy) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidWebsiteConfig(data, orgId) {
+      return data.keys().hasAll(['orgId', 'headline', 'subheadline', 'cuisineType', 'openingHours', 'address', 'phone', 'customDomain', 'domainVerified', 'published', 'customBuildStatus', 'updatedBy', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'headline', 'subheadline', 'cuisineType', 'openingHours', 'address', 'phone', 'customDomain', 'domainVerified', 'published', 'customBuildStatus', 'updatedBy', 'updatedAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        data.headline is string && data.headline.size() >= 1 && data.headline.size() <= 160 &&
+        data.subheadline is string && data.subheadline.size() >= 1 && data.subheadline.size() <= 300 &&
+        data.cuisineType is string && data.cuisineType.size() >= 1 && data.cuisineType.size() <= 80 &&
+        data.openingHours is string && data.openingHours.size() >= 1 && data.openingHours.size() <= 200 &&
+        data.address is string && data.address.size() >= 1 && data.address.size() <= 240 &&
+        data.phone is string && data.phone.size() >= 3 && data.phone.size() <= 40 &&
+        data.customDomain is string && data.customDomain.size() <= 120 &&
+        data.domainVerified is bool &&
+        data.published is bool &&
+        data.customBuildStatus is string && data.customBuildStatus.size() <= 20 && data.customBuildStatus in ['none', 'requested', 'in_review', 'approved', 'delivered'] &&
+        isValidId(data.updatedBy) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuditEvent(data, orgId) {
+      return data.keys().hasAll(['orgId', 'actorId', 'actorName', 'action', 'targetType', 'targetId', 'details', 'createdAt']) &&
+        data.keys().hasOnly(['orgId', 'actorId', 'actorName', 'action', 'targetType', 'targetId', 'details', 'createdAt']) &&
+        data.orgId == orgId && isValidId(data.orgId) &&
+        isValidId(data.actorId) &&
+        data.actorName is string && data.actorName.size() >= 1 && data.actorName.size() <= 100 &&
+        data.action is string && data.action.size() >= 1 && data.action.size() <= 120 &&
+        data.targetType is string && data.targetType.size() >= 1 && data.targetType.size() <= 64 &&
+        data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 128 &&
+        data.details is string && data.details.size() >= 1 && data.details.size() <= 500 &&
+        data.createdAt is timestamp;
+    }
+
+    // Connection health check endpoint (read-only)
+    match /test/connection {
+      allow get: if isSignedIn();
+      allow list, write: if false;
+    }
+
+    // Admins registry
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && request.auth.uid == adminId;
+      allow list, write: if false;
+    }
+
+    // Organizations
+    match /organizations/{orgId} {
+      allow get: if isSignedIn() && isValidId(orgId) && (existing().ownerId == request.auth.uid || isOrgMember(orgId));
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(orgId) &&
+        isValidOrganization(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().planId == 'free' &&
+        incoming().subscriptionStatus == 'active' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(orgId) &&
+        isValidOrganization(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'timezone', 'baseCurrency', 'updatedAt']))
+        );
+      allow delete: if isAdmin();
+
+      // Branches
+      match /branches/{branchId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(branchId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(branchId) &&
+          isValidBranch(incoming(), orgId) &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isOrgMember(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(branchId) &&
+          isValidBranch(incoming(), orgId) &&
+          incoming().createdBy == existing().createdBy &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (isOrgOwner(orgId) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'city', 'address', 'timezone', 'status', 'updatedAt']))
+          );
+        allow delete: if isAdmin();
+      }
+
+      // Members
+      match /members/{userId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(userId) && (request.auth.uid == userId || isOrgMember(orgId));
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(userId) &&
+          isValidMember(incoming(), orgId, userId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            isOrgOwner(orgId)
+          );
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(userId) &&
+          isValidMember(incoming(), orgId, userId) &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (isOrgOwner(orgId) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'role', 'branchId', 'status', 'updatedAt']))
+          );
+        allow delete: if isValidId(orgId) && isValidId(userId) && (isAdmin() || isOrgOwner(orgId));
+      }
+
+      // Ingredients
+      match /ingredients/{ingredientId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(ingredientId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(ingredientId) &&
+          isValidIngredient(incoming(), orgId) &&
+          incoming().updatedBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isOrgMember(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(ingredientId) &&
+          isValidIngredient(incoming(), orgId) &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedBy == request.auth.uid &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (isOrgMember(orgId) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'currentStockMilli', 'reorderThresholdMilli', 'targetQuantityMilli', 'unitCostMinor', 'preferredSupplierId', 'storageLocation', 'updatedBy', 'updatedAt']))
+          );
+        allow delete: if isValidId(orgId) && isValidId(ingredientId) && (isAdmin() || isOrgOwner(orgId));
+      }
+
+      // Suppliers
+      match /suppliers/{supplierId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(supplierId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(supplierId) &&
+          isValidSupplier(incoming(), orgId) &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isOrgMember(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(supplierId) &&
+          isValidSupplier(incoming(), orgId) &&
+          incoming().createdBy == existing().createdBy &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (isOrgMember(orgId) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'contactName', 'phone', 'email', 'paymentTerms', 'status', 'updatedAt']))
+          );
+        allow delete: if isValidId(orgId) && isValidId(supplierId) && (isAdmin() || isOrgOwner(orgId));
+      }
+
+      // Purchases
+      match /purchases/{purchaseId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(purchaseId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(purchaseId) &&
+          isValidPurchase(incoming(), orgId) &&
+          incoming().status in ['draft', 'ordered'] &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isOrgMember(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(purchaseId) &&
+          isValidPurchase(incoming(), orgId) &&
+          incoming().createdBy == existing().createdBy &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            // Terminal state lock: once received or rejected, cannot be updated by non-admins
+            (existing().status in ['draft', 'ordered'] && isOrgMember(orgId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'updatedAt']))
+          );
+        allow delete: if isAdmin();
+      }
+
+      // Stock Movements (Immutable Ledger)
+      match /movements/{movementId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(movementId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(movementId) &&
+          isValidStockMovement(incoming(), orgId) &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          isOrgMember(orgId);
+        allow update, delete: if false;
+      }
+
+      // Recipes
+      match /recipes/{recipeId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(recipeId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(recipeId) &&
+          isValidRecipe(incoming(), orgId) &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isOrgMember(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(recipeId) &&
+          isValidRecipe(incoming(), orgId) &&
+          incoming().createdBy == existing().createdBy &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (isOrgMember(orgId) && incoming().diff(existing()).affectedKeys().hasOnly(['dishName', 'category', 'portionsYield', 'estimatedCostMinor', 'sellingPriceMinor', 'ingredientsSummary', 'version', 'updatedAt']))
+          );
+        allow delete: if isValidId(orgId) && isValidId(recipeId) && (isAdmin() || isOrgOwner(orgId));
+      }
+
+      // Tips
+      match /tips/{tipId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(tipId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(tipId) &&
+          isValidTipRecord(incoming(), orgId) &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isOrgMember(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(tipId) &&
+          isValidTipRecord(incoming(), orgId) &&
+          incoming().createdBy == existing().createdBy &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (existing().status != 'paid_out' && isOrgMember(orgId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'updatedAt']))
+          );
+        allow delete: if isAdmin();
+      }
+
+      // Customers (PII protected to organization members/owner)
+      match /customers/{customerId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(customerId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(customerId) &&
+          isValidCustomer(incoming(), orgId) &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isOrgMember(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(customerId) &&
+          isValidCustomer(incoming(), orgId) &&
+          incoming().createdBy == existing().createdBy &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (isOrgMember(orgId) && incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'email', 'marketingConsent', 'recordedVisits', 'lifetimeSpendMinor', 'dietaryNotes', 'updatedAt']))
+          );
+        allow delete: if isValidId(orgId) && isValidId(customerId) && (isAdmin() || isOrgOwner(orgId));
+      }
+
+      // Reservations
+      match /reservations/{reservationId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(reservationId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(reservationId) &&
+          isValidReservation(incoming(), orgId) &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isOrgMember(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(reservationId) &&
+          isValidReservation(incoming(), orgId) &&
+          incoming().createdBy == existing().createdBy &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (!(existing().status in ['completed', 'cancelled']) && isOrgMember(orgId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['tableCode', 'partySize', 'reservationStart', 'durationMinutes', 'status', 'specialRequests', 'updatedAt']))
+          );
+        allow delete: if isValidId(orgId) && isValidId(reservationId) && (isAdmin() || isOrgOwner(orgId));
+      }
+
+      // Tasks
+      match /tasks/{taskId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(taskId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(taskId) &&
+          isValidTask(incoming(), orgId) &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isOrgMember(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(taskId) &&
+          isValidTask(incoming(), orgId) &&
+          incoming().createdBy == existing().createdBy &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (isOrgMember(orgId) && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'priority', 'status', 'assigneeName', 'dueDate', 'updatedAt']))
+          );
+        allow delete: if isValidId(orgId) && isValidId(taskId) && (isAdmin() || isOrgOwner(orgId));
+      }
+
+      // Meetings
+      match /meetings/{meetingId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(meetingId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(meetingId) &&
+          isValidMeeting(incoming(), orgId) &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isOrgMember(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(meetingId) &&
+          isValidMeeting(incoming(), orgId) &&
+          incoming().createdBy == existing().createdBy &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (isOrgMember(orgId) && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'scheduledAt', 'agenda', 'decisions', 'status', 'updatedAt']))
+          );
+        allow delete: if isValidId(orgId) && isValidId(meetingId) && (isAdmin() || isOrgOwner(orgId));
+      }
+
+      // Chat Messages
+      match /messages/{messageId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(messageId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(messageId) &&
+          isValidChatMessage(incoming(), orgId) &&
+          incoming().senderId == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          isOrgMember(orgId);
+        allow update, delete: if false;
+      }
+
+      // POS Orders
+      match /orders/{orderId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(orderId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(orderId) &&
+          isValidPosOrder(incoming(), orgId) &&
+          incoming().createdBy == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          isOrgMember(orgId);
+        allow update, delete: if false;
+      }
+
+      // Website Configuration
+      match /websites/{configId} {
+        allow get: if isValidId(orgId) && isValidId(configId) && (existing().published == true || isOrgMember(orgId));
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(configId) &&
+          isValidWebsiteConfig(incoming(), orgId) &&
+          incoming().domainVerified == false &&
+          incoming().updatedBy == request.auth.uid &&
+          incoming().updatedAt == request.time &&
+          isOrgOwner(orgId);
+        allow update: if isVerifiedUser() && isValidId(orgId) && isValidId(configId) &&
+          isValidWebsiteConfig(incoming(), orgId) &&
+          incoming().updatedBy == request.auth.uid &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (isOrgOwner(orgId) &&
+              incoming().domainVerified == existing().domainVerified &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['headline', 'subheadline', 'cuisineType', 'openingHours', 'address', 'phone', 'customDomain', 'published', 'customBuildStatus', 'updatedBy', 'updatedAt']))
+          );
+        allow delete: if isAdmin();
+      }
+
+      // Audit Trail (Immutable)
+      match /audit/{eventId} {
+        allow get: if isSignedIn() && isValidId(orgId) && isValidId(eventId) && isOrgMember(orgId);
+        allow list: if isSignedIn() && existing().orgId == orgId && isOrgMember(orgId);
+        allow create: if isVerifiedUser() && isValidId(orgId) && isValidId(eventId) &&
+          isValidAuditEvent(incoming(), orgId) &&
+          incoming().actorId == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          isOrgMember(orgId);
+        allow update, delete: if false;
+      }
+    }
+  }
+}

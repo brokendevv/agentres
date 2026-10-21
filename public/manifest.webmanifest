@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "TablePulse OS — Restaurant Operations Platform",
+  "short_name": "TablePulse",
+  "description": "Multi-tenant AI restaurant operations, inventory, purchasing, recipe costing, tips, CRM, and billing platform.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

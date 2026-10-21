@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "TablePulse OS",
+  "description": "Multi-tenant AI restaurant operations, inventory, purchasing, recipe costing, tips, CRM, and billing platform.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

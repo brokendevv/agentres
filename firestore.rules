@@ -1,0 +1,180 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Pillar 3: Primitives & Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isPlatformAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'yasserrajeb@gmail.com' && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isOrgOwner(orgId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/organizations/$(orgId)) &&
+        get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerUid == request.auth.uid;
+    }
+
+    function isOrgMember(orgId) {
+      return isSignedIn() && (
+        isOrgOwner(orgId) ||
+        (
+          exists(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid)).data.status == 'active'
+        ) ||
+        isPlatformAdmin()
+      );
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'activeOrgId', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'activeOrgId', 'activeBranchId', 'createdAt', 'updatedAt']) &&
+        data.uid == userId &&
+        data.uid is string && data.uid.size() <= 128 &&
+        data.email is string && data.email.size() <= 256 &&
+        data.displayName is string && data.displayName.size() <= 120 &&
+        data.activeOrgId is string && data.activeOrgId.size() <= 128 &&
+        data.createdAt is string && data.createdAt.size() <= 64 &&
+        data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    function isValidOrganization(data) {
+      return data.keys().hasAll(['name', 'ownerUid', 'currency', 'plan', 'subscriptionStatus', 'aiQueriesUsedThisMonth', 'country', 'timezone', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['name', 'ownerUid', 'currency', 'plan', 'subscriptionStatus', 'aiQueriesUsedThisMonth', 'country', 'timezone', 'lemonSqueezyCustomerId', 'lemonSqueezySubscriptionId', 'createdAt', 'updatedAt']) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.ownerUid is string && data.ownerUid.size() <= 128 &&
+        data.currency in ['MAD', 'USD', 'EUR', 'GBP'] &&
+        data.plan in ['free', 'pro', 'business', 'ultra'] &&
+        data.subscriptionStatus in ['active', 'trialing', 'past_due', 'canceled', 'expired'] &&
+        data.aiQueriesUsedThisMonth is number && data.aiQueriesUsedThisMonth >= 0 &&
+        data.country is string && data.country.size() <= 64 &&
+        data.timezone is string && data.timezone.size() <= 64 &&
+        data.createdAt is string && data.createdAt.size() <= 64 &&
+        data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    function isValidMember(data, orgId) {
+      return data.keys().hasAll(['uid', 'orgId', 'email', 'displayName', 'role', 'branchId', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'orgId', 'email', 'displayName', 'role', 'branchId', 'status', 'createdAt', 'updatedAt']) &&
+        data.orgId == orgId &&
+        data.uid is string && data.uid.size() <= 128 &&
+        data.email is string && data.email.size() <= 256 &&
+        data.displayName is string && data.displayName.size() <= 120 &&
+        data.role in ['owner', 'manager', 'finance', 'inventory', 'staff'] &&
+        data.branchId is string && data.branchId.size() <= 128 &&
+        data.status in ['active', 'invited', 'suspended'] &&
+        data.createdAt is string && data.createdAt.size() <= 64 &&
+        data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    function isValidTenantRecord(data, orgId) {
+      return data.orgId == orgId &&
+        data.orgId is string &&
+        data.orgId.size() <= 128 &&
+        data.keys().size() <= 30;
+    }
+
+    // Pillar 6: PII Isolation on User Profiles
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isPlatformAdmin());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isPlatformAdmin());
+      allow create: if isSignedIn() && isValidId(userId) && request.auth.uid == userId && isValidUserProfile(incoming(), userId);
+      allow update: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isPlatformAdmin()) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt;
+      allow delete: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isPlatformAdmin());
+    }
+
+    // Root Organization Tenant Document
+    match /organizations/{orgId} {
+      allow get: if isValidId(orgId) && isOrgMember(orgId);
+      allow list: if isSignedIn() && (resource.data.ownerUid == request.auth.uid || isPlatformAdmin());
+      allow create: if isSignedIn() && isValidId(orgId) &&
+        incoming().ownerUid == request.auth.uid &&
+        isValidOrganization(incoming());
+      allow update: if isValidId(orgId) && isValidOrganization(incoming()) && (
+        (isOrgOwner(orgId) && incoming().ownerUid == existing().ownerUid && incoming().createdAt == existing().createdAt) ||
+        isPlatformAdmin()
+      );
+      allow delete: if isValidId(orgId) && isPlatformAdmin();
+
+      // Staff Memberships
+      match /members/{memberId} {
+        allow get: if isValidId(orgId) && isValidId(memberId) && isOrgMember(orgId);
+        allow list: if isValidId(orgId) && isOrgMember(orgId) && resource.data.orgId == orgId;
+        allow create: if isValidId(orgId) && isValidId(memberId) && isValidMember(incoming(), orgId) && (isOrgOwner(orgId) || isPlatformAdmin());
+        allow update: if isValidId(orgId) && isValidId(memberId) && isValidMember(incoming(), orgId) &&
+          incoming().orgId == existing().orgId &&
+          (isOrgOwner(orgId) || isPlatformAdmin());
+        allow delete: if isValidId(orgId) && isValidId(memberId) && (isOrgOwner(orgId) || isPlatformAdmin());
+      }
+
+      // Immutable Inventory Ledger Movements (Append-Only)
+      match /movements/{movementId} {
+        allow get: if isValidId(orgId) && isValidId(movementId) && isOrgMember(orgId);
+        allow list: if isValidId(orgId) && isOrgMember(orgId) && resource.data.orgId == orgId;
+        allow create: if isValidId(orgId) && isValidId(movementId) && isOrgMember(orgId) &&
+          isValidTenantRecord(incoming(), orgId) &&
+          incoming().actorUid == request.auth.uid &&
+          incoming().movementType in ['opening', 'receipt', 'consumption', 'transfer', 'waste', 'stocktake', 'return', 'correction'];
+        allow update, delete: if false;
+      }
+
+      // Immutable Security & Operational Audit Logs (Append-Only)
+      match /auditLogs/{logId} {
+        allow get: if isValidId(orgId) && isValidId(logId) && isOrgMember(orgId);
+        allow list: if isValidId(orgId) && isOrgMember(orgId) && resource.data.orgId == orgId;
+        allow create: if isValidId(orgId) && isValidId(logId) && isOrgMember(orgId) &&
+          isValidTenantRecord(incoming(), orgId) &&
+          incoming().actorUid == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      // Domain Operational Collections under Organization Master Gate
+      match /{collectionName}/{docId} {
+        allow get: if isValidId(orgId) && isValidId(docId) &&
+          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications'] &&
+          isOrgMember(orgId);
+        allow list: if isValidId(orgId) &&
+          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications'] &&
+          isOrgMember(orgId) &&
+          resource.data.orgId == orgId;
+        allow create: if isValidId(orgId) && isValidId(docId) &&
+          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications'] &&
+          isOrgMember(orgId) &&
+          isValidTenantRecord(incoming(), orgId);
+        allow update: if isValidId(orgId) && isValidId(docId) &&
+          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications'] &&
+          isOrgMember(orgId) &&
+          isValidTenantRecord(incoming(), orgId) &&
+          incoming().orgId == existing().orgId;
+        allow delete: if isValidId(orgId) && isValidId(docId) &&
+          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications'] &&
+          (isOrgOwner(orgId) || isPlatformAdmin());
+      }
+    }
+  }
+}

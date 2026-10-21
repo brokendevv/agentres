@@ -1,0 +1,527 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile and active organization context",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "activeOrgId": { "type": "string", "maxLength": 128 },
+        "activeBranchId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "activeOrgId", "createdAt", "updatedAt"]
+    },
+    "Organization": {
+      "title": "Organization",
+      "description": "Restaurant tenant workspace with plan, currency, and owner UID",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "ownerUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "currency": { "type": "string", "enum": ["MAD", "USD", "EUR", "GBP"] },
+        "plan": { "type": "string", "enum": ["free", "pro", "business", "ultra"] },
+        "subscriptionStatus": { "type": "string", "enum": ["active", "trialing", "past_due", "canceled", "expired"] },
+        "aiQueriesUsedThisMonth": { "type": "number" },
+        "country": { "type": "string", "maxLength": 64 },
+        "timezone": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerUid", "currency", "plan", "subscriptionStatus", "aiQueriesUsedThisMonth", "country", "timezone", "createdAt", "updatedAt"]
+    },
+    "Member": {
+      "title": "Member",
+      "description": "Organization staff membership and RBAC role",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "orgId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "enum": ["owner", "manager", "finance", "inventory", "staff"] },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["active", "invited", "suspended"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "orgId", "email", "displayName", "role", "branchId", "status", "createdAt", "updatedAt"]
+    },
+    "Branch": {
+      "title": "Branch",
+      "description": "Restaurant physical branch or location",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "city": { "type": "string", "maxLength": 120 },
+        "address": { "type": "string", "maxLength": 250 },
+        "timezone": { "type": "string", "maxLength": 64 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "capacity": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "name", "city", "address", "timezone", "phone", "capacity", "createdAt", "updatedAt"]
+    },
+    "Ingredient": {
+      "title": "Ingredient",
+      "description": "Inventory stock item with minor-unit valuation and threshold levels",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "category": { "type": "string", "maxLength": 64 },
+        "baseUnit": { "type": "string", "enum": ["kg", "g", "L", "mL", "unit"] },
+        "currentStock": { "type": "number" },
+        "minStock": { "type": "number" },
+        "reorderTarget": { "type": "number" },
+        "unitCostMinor": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "preferredSupplierId": { "type": "string", "maxLength": 128 },
+        "storageLocation": { "type": "string", "maxLength": 100 },
+        "expiryDate": { "type": "string", "maxLength": 40 },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "branchId", "name", "sku", "category", "baseUnit", "currentStock", "minStock", "reorderTarget", "unitCostMinor", "currency", "preferredSupplierId", "storageLocation", "expiryDate", "updatedBy", "createdAt", "updatedAt"]
+    },
+    "Supplier": {
+      "title": "Supplier",
+      "description": "Approved restaurant vendor and supplier contact record",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "category": { "type": "string", "maxLength": 80 },
+        "contactName": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "maxLength": 160 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "currency": { "type": "string", "maxLength": 8 },
+        "paymentTerms": { "type": "string", "maxLength": 80 },
+        "rating": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "name", "category", "contactName", "email", "phone", "currency", "paymentTerms", "rating", "createdAt", "updatedAt"]
+    },
+    "PurchaseOrder": {
+      "title": "PurchaseOrder",
+      "description": "Purchase order and delivery receipt record",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "supplierId": { "type": "string", "maxLength": 128 },
+        "supplierName": { "type": "string", "maxLength": 120 },
+        "invoiceRef": { "type": "string", "maxLength": 80 },
+        "status": { "type": "string", "enum": ["draft", "ordered", "received", "rejected"] },
+        "ingredientId": { "type": "string", "maxLength": 128 },
+        "ingredientName": { "type": "string", "maxLength": 120 },
+        "quantity": { "type": "number" },
+        "unit": { "type": "string", "enum": ["kg", "g", "L", "mL", "unit"] },
+        "unitPriceMinor": { "type": "number" },
+        "taxMinor": { "type": "number" },
+        "discountMinor": { "type": "number" },
+        "totalMinor": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "purchaseDate": { "type": "string", "maxLength": 40 },
+        "receivedAt": { "type": "string", "maxLength": 40 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "branchId", "supplierId", "supplierName", "invoiceRef", "status", "ingredientId", "ingredientName", "quantity", "unit", "unitPriceMinor", "taxMinor", "discountMinor", "totalMinor", "currency", "purchaseDate", "receivedAt", "notes", "createdBy", "createdAt", "updatedAt"]
+    },
+    "InventoryMovement": {
+      "title": "InventoryMovement",
+      "description": "Immutable inventory ledger movement record",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "ingredientId": { "type": "string", "maxLength": 128 },
+        "ingredientName": { "type": "string", "maxLength": 120 },
+        "movementType": { "type": "string", "enum": ["opening", "receipt", "consumption", "transfer", "waste", "stocktake", "return", "correction"] },
+        "quantityDelta": { "type": "number" },
+        "unit": { "type": "string", "enum": ["kg", "g", "L", "mL", "unit"] },
+        "balanceAfter": { "type": "number" },
+        "referenceId": { "type": "string", "maxLength": 128 },
+        "reason": { "type": "string", "maxLength": 300 },
+        "actorUid": { "type": "string", "maxLength": 128 },
+        "actorName": { "type": "string", "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "branchId", "ingredientId", "ingredientName", "movementType", "quantityDelta", "unit", "balanceAfter", "referenceId", "reason", "actorUid", "actorName", "createdAt"]
+    },
+    "Recipe": {
+      "title": "Recipe",
+      "description": "Dish recipe and food cost specification",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "dishName": { "type": "string", "maxLength": 120 },
+        "category": { "type": "string", "maxLength": 80 },
+        "portionsYield": { "type": "number" },
+        "sellingPriceMinor": { "type": "number" },
+        "estimatedCostMinor": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "primaryIngredientId": { "type": "string", "maxLength": 128 },
+        "primaryIngredientName": { "type": "string", "maxLength": 120 },
+        "primaryQuantity": { "type": "number" },
+        "primaryUnit": { "type": "string", "enum": ["kg", "g", "L", "mL", "unit"] },
+        "instructions": { "type": "string", "maxLength": 600 },
+        "version": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "dishName", "category", "portionsYield", "sellingPriceMinor", "estimatedCostMinor", "currency", "primaryIngredientId", "primaryIngredientName", "primaryQuantity", "primaryUnit", "instructions", "version", "createdAt", "updatedAt"]
+    },
+    "TipRecord": {
+      "title": "TipRecord",
+      "description": "Tip collection, allocation, and payout ledger",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "amountMinor": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "shift": { "type": "string", "enum": ["morning", "afternoon", "evening", "late"] },
+        "date": { "type": "string", "maxLength": 40 },
+        "employeeName": { "type": "string", "maxLength": 120 },
+        "paymentMethod": { "type": "string", "enum": ["cash", "card", "pooled"] },
+        "status": { "type": "string", "enum": ["collected", "allocated", "paid_out"] },
+        "poolRule": { "type": "string", "enum": ["individual", "equal_split", "foh_70_boh_30"] },
+        "notes": { "type": "string", "maxLength": 300 },
+        "recordedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "branchId", "amountMinor", "currency", "shift", "date", "employeeName", "paymentMethod", "status", "poolRule", "notes", "recordedBy", "createdAt", "updatedAt"]
+    },
+    "CustomerRecord": {
+      "title": "CustomerRecord",
+      "description": "CRM directory profile with visit count and verified spend",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "maxLength": 160 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "marketingConsent": { "type": "boolean" },
+        "visitsCount": { "type": "number" },
+        "totalSpendMinor": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "lastVisitDate": { "type": "string", "maxLength": 40 },
+        "dietaryNotes": { "type": "string", "maxLength": 300 },
+        "source": { "type": "string", "enum": ["walk_in", "reservation", "pos_import"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "name", "email", "phone", "marketingConsent", "visitsCount", "totalSpendMinor", "currency", "lastVisitDate", "dietaryNotes", "source", "createdAt", "updatedAt"]
+    },
+    "ReservationRecord": {
+      "title": "ReservationRecord",
+      "description": "Table booking and guest reservation",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 120 },
+        "customerPhone": { "type": "string", "maxLength": 40 },
+        "date": { "type": "string", "maxLength": 40 },
+        "time": { "type": "string", "maxLength": 20 },
+        "partySize": { "type": "number" },
+        "tableNumber": { "type": "string", "maxLength": 24 },
+        "status": { "type": "string", "enum": ["confirmed", "seated", "completed", "cancelled", "no_show"] },
+        "specialRequests": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "branchId", "customerName", "customerPhone", "date", "time", "partySize", "tableNumber", "status", "specialRequests", "createdAt", "updatedAt"]
+    },
+    "PosOrder": {
+      "title": "PosOrder",
+      "description": "Sales order from POS or validated import",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "externalOrderId": { "type": "string", "maxLength": 128 },
+        "recipeId": { "type": "string", "maxLength": 128 },
+        "dishName": { "type": "string", "maxLength": 120 },
+        "quantity": { "type": "number" },
+        "totalMinor": { "type": "number" },
+        "taxMinor": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "source": { "type": "string", "enum": ["manual", "csv_import", "pos_api"] },
+        "orderDate": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "branchId", "externalOrderId", "recipeId", "dishName", "quantity", "totalMinor", "taxMinor", "currency", "source", "orderDate", "createdAt"]
+    },
+    "ReviewRecord": {
+      "title": "ReviewRecord",
+      "description": "Customer review and human-approved response status",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "source": { "type": "string", "enum": ["google_business", "direct_feedback", "tripadvisor_import"] },
+        "authorName": { "type": "string", "maxLength": 120 },
+        "rating": { "type": "number" },
+        "comment": { "type": "string", "maxLength": 1000 },
+        "sentiment": { "type": "string", "enum": ["positive", "neutral", "negative"] },
+        "draftReply": { "type": "string", "maxLength": 1000 },
+        "replyStatus": { "type": "string", "enum": ["pending", "draft_ready", "approved_published"] },
+        "publishedAt": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "branchId", "source", "authorName", "rating", "comment", "sentiment", "draftReply", "replyStatus", "publishedAt", "createdAt", "updatedAt"]
+    },
+    "TaskRecord": {
+      "title": "TaskRecord",
+      "description": "Operational task linked to meetings, checklists, inventory, or reviews",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 160 },
+        "description": { "type": "string", "maxLength": 600 },
+        "assigneeName": { "type": "string", "maxLength": 120 },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"] },
+        "status": { "type": "string", "enum": ["todo", "in_progress", "completed"] },
+        "dueDate": { "type": "string", "maxLength": 40 },
+        "linkedModule": { "type": "string", "enum": ["inventory", "meeting", "checklist", "review", "general"] },
+        "linkedRecordId": { "type": "string", "maxLength": 128 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "branchId", "title", "description", "assigneeName", "priority", "status", "dueDate", "linkedModule", "linkedRecordId", "createdBy", "createdAt", "updatedAt"]
+    },
+    "MeetingRecord": {
+      "title": "MeetingRecord",
+      "description": "Team meeting agenda, decisions, and action items",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 160 },
+        "date": { "type": "string", "maxLength": 40 },
+        "time": { "type": "string", "maxLength": 20 },
+        "participants": { "type": "string", "maxLength": 300 },
+        "agenda": { "type": "string", "maxLength": 600 },
+        "decisions": { "type": "string", "maxLength": 600 },
+        "actionItemSummary": { "type": "string", "maxLength": 300 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "branchId", "title", "date", "time", "participants", "agenda", "decisions", "actionItemSummary", "createdBy", "createdAt", "updatedAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Internal restaurant channel communication message",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "channel": { "type": "string", "enum": ["general", "kitchen", "front_of_house", "purchasing", "managers"] },
+        "senderUid": { "type": "string", "maxLength": 128 },
+        "senderName": { "type": "string", "maxLength": 120 },
+        "senderRole": { "type": "string", "maxLength": 40 },
+        "body": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "channel", "senderUid", "senderName", "senderRole", "body", "createdAt"]
+    },
+    "ChecklistItem": {
+      "title": "ChecklistItem",
+      "description": "Daily opening, closing, hygiene, and equipment operating checklist",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "category": { "type": "string", "enum": ["opening", "closing", "cleaning", "equipment", "handover"] },
+        "title": { "type": "string", "maxLength": 160 },
+        "requiredRole": { "type": "string", "maxLength": 40 },
+        "completed": { "type": "boolean" },
+        "completedBy": { "type": "string", "maxLength": 120 },
+        "completedAt": { "type": "string", "maxLength": 40 },
+        "notes": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "branchId", "category", "title", "requiredRole", "completed", "completedBy", "completedAt", "notes", "createdAt", "updatedAt"]
+    },
+    "AutomationRule": {
+      "title": "AutomationRule",
+      "description": "Configurable operational trigger-condition-action workflow rule",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 140 },
+        "triggerType": { "type": "string", "enum": ["low_stock", "expiring_lot", "purchase_received", "negative_review", "overdue_task", "payment_failed"] },
+        "actionType": { "type": "string", "enum": ["create_task", "send_notification", "prepare_po_draft", "draft_review_reply"] },
+        "enabled": { "type": "boolean" },
+        "requiresApproval": { "type": "boolean" },
+        "lastTriggeredAt": { "type": "string", "maxLength": 40 },
+        "executionCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "name", "triggerType", "actionType", "enabled", "requiresApproval", "lastTriggeredAt", "executionCount", "createdAt", "updatedAt"]
+    },
+    "WebsiteConfig": {
+      "title": "WebsiteConfig",
+      "description": "Restaurant public website builder state and custom website service request",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "headline": { "type": "string", "maxLength": 160 },
+        "subheadline": { "type": "string", "maxLength": 300 },
+        "aboutText": { "type": "string", "maxLength": 1000 },
+        "openingHours": { "type": "string", "maxLength": 200 },
+        "address": { "type": "string", "maxLength": 240 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "themeColor": { "type": "string", "maxLength": 24 },
+        "published": { "type": "boolean" },
+        "customDomain": { "type": "string", "maxLength": 120 },
+        "domainVerified": { "type": "boolean" },
+        "bespokeRequestStatus": { "type": "string", "enum": ["none", "requested", "in_review", "quoted", "in_production", "delivered"] },
+        "bespokeNotes": { "type": "string", "maxLength": 800 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "headline", "subheadline", "aboutText", "openingHours", "address", "phone", "themeColor", "published", "customDomain", "domainVerified", "bespokeRequestStatus", "bespokeNotes", "updatedAt"]
+    },
+    "NotificationItem": {
+      "title": "NotificationItem",
+      "description": "In-app operational notification with unread state",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 160 },
+        "body": { "type": "string", "maxLength": 400 },
+        "category": { "type": "string", "enum": ["stock", "review", "task", "meeting", "billing", "system"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "title", "body", "category", "read", "createdAt", "updatedAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable security and operational audit trail entry",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "actorUid": { "type": "string", "maxLength": 128 },
+        "actorEmail": { "type": "string", "maxLength": 160 },
+        "action": { "type": "string", "maxLength": 120 },
+        "entityType": { "type": "string", "maxLength": 80 },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "details": { "type": "string", "maxLength": 600 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "actorUid", "actorEmail", "action", "entityType", "entityId", "details", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profile and active tenant pointer"
+    },
+    "/organizations/{orgId}": {
+      "schema": { "$ref": "#/entities/Organization" },
+      "description": "Root multi-tenant restaurant organization document"
+    },
+    "/organizations/{orgId}/members/{memberId}": {
+      "schema": { "$ref": "#/entities/Member" },
+      "description": "Organization staff members and roles"
+    },
+    "/organizations/{orgId}/branches/{branchId}": {
+      "schema": { "$ref": "#/entities/Branch" },
+      "description": "Physical restaurant locations under an organization"
+    },
+    "/organizations/{orgId}/ingredients/{ingredientId}": {
+      "schema": { "$ref": "#/entities/Ingredient" },
+      "description": "Stock items and ingredient balances"
+    },
+    "/organizations/{orgId}/suppliers/{supplierId}": {
+      "schema": { "$ref": "#/entities/Supplier" },
+      "description": "Suppliers and vendor contacts"
+    },
+    "/organizations/{orgId}/purchases/{purchaseId}": {
+      "schema": { "$ref": "#/entities/PurchaseOrder" },
+      "description": "Purchase orders and deliveries"
+    },
+    "/organizations/{orgId}/movements/{movementId}": {
+      "schema": { "$ref": "#/entities/InventoryMovement" },
+      "description": "Immutable inventory ledger movements"
+    },
+    "/organizations/{orgId}/recipes/{recipeId}": {
+      "schema": { "$ref": "#/entities/Recipe" },
+      "description": "Dish recipes and food cost breakdowns"
+    },
+    "/organizations/{orgId}/tips/{tipId}": {
+      "schema": { "$ref": "#/entities/TipRecord" },
+      "description": "Shift tip collection and distributions"
+    },
+    "/organizations/{orgId}/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/CustomerRecord" },
+      "description": "Customer directory and visit counts"
+    },
+    "/organizations/{orgId}/reservations/{reservationId}": {
+      "schema": { "$ref": "#/entities/ReservationRecord" },
+      "description": "Table bookings and reservations"
+    },
+    "/organizations/{orgId}/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/PosOrder" },
+      "description": "Recorded POS sales orders"
+    },
+    "/organizations/{orgId}/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/ReviewRecord" },
+      "description": "External and direct customer reviews"
+    },
+    "/organizations/{orgId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/TaskRecord" },
+      "description": "Operational tasks"
+    },
+    "/organizations/{orgId}/meetings/{meetingId}": {
+      "schema": { "$ref": "#/entities/MeetingRecord" },
+      "description": "Team meetings and decisions"
+    },
+    "/organizations/{orgId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Internal group chat messages"
+    },
+    "/organizations/{orgId}/checklists/{checklistId}": {
+      "schema": { "$ref": "#/entities/ChecklistItem" },
+      "description": "Opening, closing, and hygiene checklists"
+    },
+    "/organizations/{orgId}/automations/{automationId}": {
+      "schema": { "$ref": "#/entities/AutomationRule" },
+      "description": "Automated operational workflow rules"
+    },
+    "/organizations/{orgId}/website/{configId}": {
+      "schema": { "$ref": "#/entities/WebsiteConfig" },
+      "description": "Restaurant website builder configuration"
+    },
+    "/organizations/{orgId}/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/NotificationItem" },
+      "description": "In-app operational notifications"
+    },
+    "/organizations/{orgId}/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable tenant audit history"
+    }
+  }
+}
