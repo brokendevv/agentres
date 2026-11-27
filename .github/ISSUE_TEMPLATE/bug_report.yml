@@ -1,0 +1,46 @@
+name: Bug Report
+description: Report a bug or calculation discrepancy in TablePulse OS
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue. For security vulnerabilities, please follow `SECURITY.md` instead of opening a public issue.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected to happen.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected Area
+      options:
+        - Domain Ledger / Calculations (src/domain)
+        - Inventory & Purchasing
+        - Team, Tips & Tasks
+        - Customers, Reservations & Website
+        - AI Assistant / OCR / Billing
+        - Firestore Rules / Auth
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Go to '...'
+        2. Submit '...'
+        3. Observe '...'
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Verification
+      options:
+        - label: I have checked that this is not a duplicate issue.
+          required: true

@@ -1,0 +1,25 @@
+name: Feature Request
+description: Propose an improvement or new hospitality ledger capability
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Operational Need
+      description: Describe the restaurant workflow or developer library use case this addresses.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Outline expected behavior, domain invariants, and any affected modules.
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution Interest
+      options:
+        - label: I am interested in opening a PR for this feature.

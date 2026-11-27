@@ -1,45 +1,97 @@
-# TablePulse OS — Production Architecture, Security & Handover Guide
+# TablePulse OS
 
-## 1. Architecture & Tech Stack
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS (`Plus Jakarta Sans` + `IBM Plex Mono` tabular numerals), PWA Web App Manifest (`public/manifest.webmanifest`).
-- **Authentication & Database**: Firebase Authentication (Email/Password + Google OAuth 2.0 Sign-In + Password Reset) and Cloud Firestore (`firebase-applet-config.json`), governed by Zero-Trust Attribute-Based Access Control rules (`firestore.rules`).
-- **Backend Runtime (`server.ts`)**: Express 4 + Vite middleware server on port `3000` providing:
-  - `GET /api/health`: Live configuration and external secret status.
-  - `POST /api/ai/assistant`: Server-side `@google/genai` (`gemini-3.8-flash`) grounded strictly in the requesting organization's authorized ledger records.
-  - `POST /api/ai/extract-receipt`: Structured OCR/invoice extraction into integer minor units with automatic arithmetic reconciliation (`validateAndReconcileReceiptExtraction`).
-  - `POST /api/billing/create-checkout`: Official Lemon Squeezy Merchant of Record API integration (`https://api.lemonsqueezy.com/v1/checkouts`).
-  - `POST /api/billing/webhook`: Idempotent `X-Signature` HMAC-SHA256 verified webhook handler using `crypto.timingSafeEqual`.
+[![License](https://img.shields.io/badge/License-Apache_2.0-176B58.svg)](./LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-176B58.svg)](./package.json)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-176B58.svg)](./tsconfig.json)
 
-## 2. Multi-Tenant Security & Firestore Rules (`firestore.rules`)
-- **Default-Deny Catch-All**: `match /{document=**} { allow read, write: if false; }`
-- **PII Isolation**: `/users/{userId}` is accessible strictly to `request.auth.uid == userId` or the verified platform administrator (`yasserrajeb@gmail.com`).
-- **The Master Gate (`isOrgMember(orgId)`)**: Every subcollection under `/organizations/{orgId}/**` verifies that the authenticated user is either the organization `ownerUid` or holds an `active` document in `/organizations/{orgId}/members/$(request.auth.uid)`.
-- **Append-Only Ledgers**: `/organizations/{orgId}/movements/{movementId}` and `/organizations/{orgId}/auditLogs/{logId}` enforce `allow update, delete: if false;` so historical inventory and security records cannot be altered destructively.
+**TablePulse OS** is an open-source, multi-tenant restaurant operations platform built with React 19, TypeScript, Express, Tailwind CSS, Cloud Firestore, and server-side Gemini AI. It enforces integer minor-unit financial accounting, strict separation between purchase orders and verified stock receipts, role-scoped tenant isolation, and human-in-the-loop AI workflows.
 
-## 3. Payment Provider Selection & Rizon Payout Verification
-### Why Lemon Squeezy (Merchant of Record) was selected:
-1. Direct Stripe merchant accounts are not generally available to standard domestic Moroccan entities without establishing an external legal entity (e.g., US LLC or UK Ltd).
-2. **Lemon Squeezy** acts as a global Merchant of Record, handles international card processing and VAT/sales tax compliance automatically, and explicitly supports **Morocco** for merchant onboarding and payouts.
+## Quick Start
 
-### Verified Rizon Account & Rizon Visa Card Payout Route:
-- **Never treat a Visa card number as a bank payout account.** Customer cards are charged by Lemon Squeezy checkout.
-- **Rizon** provides verified **USD (US ACH routing + account number)** and **EUR (SEPA IBAN)** virtual receiving bank accounts.
-- Lemon Squeezy settles net subscription proceeds to the merchant's verified bank account (0% fee for US ACH USD accounts; 1% fee for international bank payouts). Once settled into the owner's Rizon USD/EUR receiving account, the balance is immediately spendable through the owner's **Rizon Visa card**.
+### Prerequisites
+- Node.js `>= 20.0.0`
+- `npm`
 
-## 4. Required External Setup for Live Activation
-1. **Firebase Console**:
-   - Google Sign-In is provisioned automatically. To enable Email/Password sign-up in production, open the Firebase Console (`hidden-autonomy-zk6kr` -> Authentication -> Sign-in method) and enable the **Email/Password** provider.
-2. **Lemon Squeezy Live Billing**:
-   - Complete merchant verification in Lemon Squeezy, create the Pro, Business, and Ultra subscription variants, configure your Rizon USD ACH or Moroccan IBAN payout destination, and add `LEMON_SQUEEZY_API_KEY`, `LEMON_SQUEEZY_STORE_ID`, and `LEMON_SQUEEZY_WEBHOOK_SECRET` in AI Studio Secrets.
-3. **Backups & Quotas**:
-   - Firestore runs on the provisioned AI Studio instance (`ai-studio-6e0b9d4a-0418-4f8f-894e-55d451c13e4b`). For automated daily Point-in-Time Recovery (PITR) backups in production, upgrade the GCP project to the Blaze plan and enable Firestore scheduled backups via `gcloud firestore backups schedules create`.
-
-## 5. Verification & Test Commands
+### 1. Clone and install
 ```bash
-# Run pure domain calculation unit tests (9 suites)
-./node_modules/.bin/tsx --test src/domain/calculations.test.ts
-
-# Type-check and build production bundle
-npm run lint
-npm run build
+git clone https://github.com/yasserrajeb/tablepulse-os.git
+cd tablepulse-os
+npm install
 ```
+
+### 2. Configure environment variables
+```bash
+cp .env.example .env
+```
+Edit `.env` with any optional integration keys (the workspace and deterministic grounded fallback engines work locally even without external API keys):
+- `GEMINI_API_KEY`: Enables live Gemini AI operations assistant & receipt OCR extraction (`server.ts`).
+- `LEMON_SQUEEZY_API_KEY`, `LEMON_SQUEEZY_STORE_ID`, `LEMON_SQUEEZY_WEBHOOK_SECRET`: Enables live Lemon Squeezy checkout & HMAC-SHA256 webhook verification.
+
+### 3. Start local development
+```bash
+npm run dev
+```
+Open `http://localhost:3000` (or `http://localhost:3000/?autostart=1` to inspect the workspace directly).
+
+### 4. Run full verification suite
+```bash
+npm run verify
+```
+This runs `npm run lint` (`tsc --noEmit`), `npm test` (19 deterministic `node:test` suites via `tsx`), and `npm run build` (`vite build`).
+
+## Architecture & Repository Layout
+
+| Path | Purpose |
+| --- | --- |
+| `src/domain/index.ts` | Zero-dependency hospitality ledger & accounting core (`toMinorUnits`, unit conversion, weighted-average stock receipt, recipe food cost, variance, tip pools, entitlements) |
+| `src/domain/enhancements.ts` | Role-based navigation permissions, tenant-scoped global search, UTM consent sanitization, announcement lifecycle |
+| `src/components/` | Modular UI suites (`InventoryPurchasingModule`, `TeamOperationsModule`, `GrowthExperienceModule`, `IntelligenceGovernanceModule`, `MarketingLanding`) |
+| `server.ts` | Express 4 + Vite server (`GET /api/health`, `POST /api/ai/assistant`, `POST /api/ai/extract-receipt`, `POST /api/billing/create-checkout`, `POST /api/billing/webhook`, `/api/support/tickets`) |
+| `firestore.rules` | Default-deny Zero-Trust multi-tenant Firestore security rules with `isOrgMember(orgId)` and append-only `movements` & `auditLogs` |
+| `firebase-blueprint.json` | Canonical Firestore schema blueprint |
+
+## Using the Pure Domain Core (`src/domain`)
+
+All financial, inventory, and recipe-costing primitives live in `src/domain/index.ts` with zero browser or database dependencies:
+
+```ts
+import {
+  toMinorUnits,
+  formatMinorCurrency,
+  calculatePurchaseTotalMinor,
+  calculateRecipeCostMetrics,
+} from './src/domain/index';
+
+const po = calculatePurchaseTotalMinor({
+  quantity: 10,
+  unitPriceMinor: toMinorUnits(15.0),
+  taxMinor: 1500,
+  discountMinor: 500,
+});
+
+console.log(formatMinorCurrency(po.totalMinor, 'MAD')); // "160.00 MAD"
+```
+
+## Multi-Tenant Security & Firebase Setup
+
+- **Default-Deny Catch-All**: `firestore.rules` rejects all reads and writes by default (`match /{document=**} { allow read, write: if false; }`).
+- **Master Gate (`isOrgMember(orgId)`)**: Organization subcollections require authenticated ownership (`ownerUid`) or an `active` member record in `/organizations/{orgId}/members/{uid}`.
+- **Append-Only Ledgers**: `/movements/{movementId}` and `/auditLogs/{logId}` prohibit `update` and `delete`.
+- **Firebase Authentication**: To use your own Firebase project, update `firebase-applet-config.json`, deploy `firestore.rules`, and enable Google Sign-In and Email/Password providers in the Firebase Console.
+
+## Billing & Payout Architecture (Lemon Squeezy + Rizon)
+
+- **Merchant of Record**: Uses the official Lemon Squeezy Checkouts API (`https://api.lemonsqueezy.com/v1/checkouts`) and verifies webhooks via HMAC-SHA256 (`crypto.timingSafeEqual`).
+- **Morocco-Friendly Payouts**: Lemon Squeezy supports Moroccan merchants and settles net USD ACH / EUR SEPA payouts to virtual receiving accounts (such as Rizon) or local Moroccan bank IBANs.
+
+## Contributing & Community
+
+Contributions are welcome! Please read:
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) for local setup, coding invariants, and PR verification rules
+- [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) for community expectations
+- [`SECURITY.md`](./SECURITY.md) for private vulnerability disclosure
+- [`CHANGELOG.md`](./CHANGELOG.md) for release history
+
+## License
+
+Licensed under the [Apache License 2.0](./LICENSE).

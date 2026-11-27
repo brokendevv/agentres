@@ -1,0 +1,6 @@
+# Default code owners for TablePulse OS
+* @yasserrajeb
+/firestore.rules @yasserrajeb
+/SECURITY.md @yasserrajeb
+/server.ts @yasserrajeb
+/src/domain/ @yasserrajeb
