@@ -1,0 +1,570 @@
+# PRODUCTION ENHANCEMENT PROMPT — Add 20 Professional Website Features to My Restaurant SaaS
+
+## Your mission
+
+Act as a senior full-stack engineer, UI/UX designer, accessibility specialist, and QA engineer working directly inside my existing Google AI Studio project.
+
+Upgrade my existing AI-powered restaurant management SaaS by implementing the 20 features specified below.
+
+**This is an implementation task, not a design exercise.** Inspect the existing application, identify the correct files and components, implement the features fully, run tests, resolve defects, and verify the finished behavior.
+
+Do not create a new unrelated application, replace the existing architecture unnecessarily, or damage existing functionality.
+
+Preserve the current database, Firebase integration, authentication, restaurant workspaces, inventory, purchasing, customers, reviews, tips, staff management, AI assistant, subscription plans, payment integrations, and administrative features.
+
+Use the existing frameworks and design system wherever possible. Make additional dependencies only when they provide a clear benefit.
+
+## 1. Dark mode toggle
+
+Implement a fully functional dark mode and light mode toggle.
+
+Requirements:
+- Provide a visible theme switch in the main navigation or user settings.
+- Apply the theme consistently to the public website, authenticated dashboards, forms, tables, dialogs, menus, charts, and notifications.
+- Persist the selected preference between visits.
+- Respect the operating system's theme on the first visit when no preference has been saved.
+- Avoid flashes of the wrong theme during page loading.
+- Ensure readable text, accessible contrast, visible form states, and appropriate borders in both themes.
+- Do not hardcode theme colors independently across every component; use shared design tokens or CSS variables.
+- Ensure charts, icons, and status indicators remain distinguishable in both themes.
+
+Acceptance test: changing the theme updates the whole interface, survives a refresh, and does not reset during normal navigation.
+
+## 2. Professional announcement banner
+
+Create a reusable announcement banner for the public website and, when appropriate, the authenticated dashboard.
+
+Use cases include new features, service announcements, maintenance notices, new subscription offers, and restaurant-specific announcements.
+
+Requirements:
+- Support configurable text, optional links, severity or announcement type, and an optional dismiss action.
+- Allow authorized administrators to create, edit, publish, and disable platform announcements.
+- Allow restaurant owners to configure announcements for their own restaurant website if website customization supports it.
+- Avoid showing expired, unpublished, or unauthorized announcements.
+- Persist dismissals appropriately and respect the configured announcement lifetime.
+- Ensure announcements never cover critical navigation or payment controls.
+- Display correctly on mobile and desktop.
+
+Do not invent discounts or claim a new service exists when it has not been configured.
+
+## 3. Global site search
+
+Implement a useful, responsive search experience.
+
+Public search should find relevant public pages, product features, pricing information, FAQs, and other published content.
+
+Authenticated search should additionally support authorized restaurant records where applicable, including:
+- Inventory ingredients.
+- Purchases and suppliers.
+- Customers.
+- Reviews.
+- Meetings and tasks.
+- Recipes and menu items.
+- Reservations and sales records.
+
+Requirements:
+- Search only records the current user is authorized to access.
+- Respect organization, branch, and role permissions in the backend.
+- Provide debounced input, useful result categories, loading indicators, empty states, and error handling.
+- Support keyboard navigation and an appropriate shortcut where practical.
+- Link results to the correct existing record or page.
+- Avoid unnecessarily expensive database-wide scans.
+- Apply indexed queries, pagination, and appropriate search infrastructure for the scale of the data.
+- Never expose private customer information, messages, or financial records through public search.
+
+Search must return real records, not prewritten example results.
+
+## 4. Back-to-top button
+
+Add a professional back-to-top control on long pages.
+
+Requirements:
+- Appear after the user scrolls beyond a configurable threshold.
+- Return smoothly to the top of the current page.
+- Work on mobile, desktop, and keyboard navigation.
+- Have an accessible name and visible focus state.
+- Respect reduced-motion preferences.
+- Avoid covering important controls or floating contact elements.
+
+Do not show the button when it serves no useful purpose on a short page.
+
+## 5. Responsive mobile navigation
+
+Audit and improve navigation across the entire website and dashboard.
+
+Requirements:
+- Implement an accessible mobile menu with a proper open and close control.
+- Include the correct navigation links according to the user's role and subscription permissions.
+- Support keyboard operation and screen readers.
+- Close the menu after navigation where appropriate.
+- Handle Escape, focus management, and outside-click behavior appropriately.
+- Prevent background content from interfering with a modal-style mobile navigation menu.
+- Avoid horizontal overflow and clipped menu items.
+- Preserve desktop navigation and responsive layouts.
+
+Never expose administrative navigation or unauthorized modules to users who lack permission. Backend authorization must remain authoritative regardless of what navigation is displayed.
+
+## 6. Loading animations and skeleton states
+
+Replace blank screens and abrupt content changes with useful loading states throughout the application.
+
+Requirements:
+- Implement reusable skeletons for dashboards, tables, search results, cards, and content panels.
+- Show loading feedback on form submissions, image uploads, receipt processing, report generation, checkout redirects, and AI queries.
+- Prevent accidental duplicate submissions while requests are in progress.
+- Use real request states rather than artificial success animations.
+- Provide retry options when appropriate.
+- Avoid excessive spinners or animations.
+- Respect reduced-motion settings.
+- Do not present skeleton content as real data.
+
+When a payment, AI request, or database operation is pending, clearly distinguish pending, successful, and failed states.
+
+## 7. Consistent hover, focus, and interaction states
+
+Create a consistent interaction system for all clickable or interactive components.
+
+Include:
+- Hover states for desktop pointers.
+- Visible keyboard focus.
+- Pressed and selected states.
+- Disabled states.
+- Loading states.
+- Validation and error states.
+- Clear feedback after successful actions.
+
+Apply these rules to buttons, navigation, tables, menu items, links, tabs, switches, checkboxes, cards that function as links, and other relevant controls.
+
+Requirements:
+- Do not make noninteractive elements appear clickable.
+- Do not communicate status exclusively through color.
+- Maintain adequate contrast in both themes.
+- Support touch devices without requiring hover.
+- Respect the existing component library and design tokens.
+
+## 8. Scroll progress indicator
+
+Add a scroll progress indicator where it provides value, particularly on long public content pages, documentation, policy pages, and articles.
+
+Requirements:
+- Calculate progress from the actual scrollable content.
+- Update smoothly without causing excessive layout work.
+- Ensure the indicator does not block navigation or content.
+- Make it accessible where meaningful.
+- Avoid showing it on short pages or in contexts where it could confuse users.
+- Do not add global scroll tracking unnecessarily to every dashboard panel.
+
+## 9. Copy-to-clipboard buttons
+
+Implement reusable copy controls for appropriate content.
+
+Supported use cases include:
+- Restaurant public website URLs.
+- Menu and reservation links.
+- Invitation links.
+- Supplier contact information where authorized.
+- Invoice and purchase reference numbers.
+- Shareable report links when securely supported.
+- Integration configuration identifiers that are safe to disclose.
+- Generated AI responses when useful.
+
+Requirements:
+- Use the browser's supported clipboard interface with appropriate permission and error handling.
+- Confirm successful copies with a temporary, accessible notification.
+- Show a meaningful failure message when copying is unavailable.
+- Do not report success unless the operation succeeds.
+- Never copy sensitive secrets or private credentials into the clipboard automatically.
+- Enforce authorization before displaying private record content.
+
+Avoid adding copy buttons to every text element without a clear user benefit.
+
+## 10. Professional print stylesheets
+
+Implement dedicated print styles for the pages and records that users may need to print.
+
+Prioritize:
+- Restaurant menus.
+- Purchase records.
+- Invoices and receipts where appropriate.
+- Inventory reports.
+- Supplier reports.
+- Tip reports.
+- Staff schedules.
+- Meetings and meeting minutes.
+- Checklists.
+- Relevant customer and sales reports.
+- Custom restaurant website pages.
+
+Requirements:
+- Create appropriate print-specific CSS.
+- Hide navigation, decorative animations, irrelevant controls, and unnecessary interactive components.
+- Use readable typography, suitable margins, and appropriate page breaks.
+- Prevent important table columns from being unnecessarily cut off.
+- Repeat table headers on subsequent pages where supported.
+- Include report titles, applicable dates, units, currency, and relevant source context.
+- Print the actual selected data and active filters.
+- Respect authorization and privacy restrictions.
+- Distinguish generated reports from official tax documents or legal invoices unless the applicable requirements have genuinely been met.
+
+Ensure the print preview is readable and professional in supported browsers.
+
+## 11. Sticky navigation and table headers
+
+Implement sticky navigation or headers where they improve usability.
+
+Potential applications:
+- Public website navigation.
+- Dashboard navigation where appropriate.
+- Long inventory tables.
+- Purchase tables.
+- Customer directories.
+- Reports with many rows.
+- Long forms with useful contextual actions.
+
+Requirements:
+- Prevent content from being hidden behind sticky elements.
+- Use appropriate stacking order.
+- Preserve mobile usability.
+- Avoid conflicting sticky elements.
+- Support horizontal scrolling on wide tables without breaking the page.
+- Test with browser zoom and different screen sizes.
+
+Do not make every header sticky by default. Apply the behavior selectively where it solves a real navigation problem.
+
+## 12. Skip-to-content accessibility link
+
+Implement a genuine accessibility skip link.
+
+Requirements:
+- Place it near the beginning of the page's keyboard navigation order.
+- Make it clearly visible when focused.
+- Point it to the correct main-content element.
+- Ensure the target is focusable or receives focus appropriately.
+- Account for sticky headers.
+- Ensure it works on public pages, authenticated dashboards, and relevant custom website templates.
+
+Use semantic landmarks such as header, navigation, main, and footer correctly. Do not introduce duplicate or conflicting main landmarks.
+
+Test the feature using keyboard-only navigation.
+
+## 13. Password visibility toggle
+
+Add an accessible show/hide password control to every relevant authentication and password-change form.
+
+Include:
+- Login.
+- Registration.
+- Password reset when a password is entered.
+- Password change.
+- Other existing password-entry forms.
+
+Requirements:
+- Switch between password and visible text without clearing the field.
+- Preserve the value and avoid breaking form validation.
+- Use a clear accessible label that changes with the current state.
+- Support keyboard and screen-reader interactions.
+- Do not reveal passwords by default.
+- Do not log passwords or store them in application analytics.
+- Preserve browser autofill and password-manager compatibility.
+
+Use the existing authentication provider for actual password handling. Do not create a custom insecure password-storage system.
+
+## 14. Privacy-conscious UTM campaign tracking
+
+Implement reliable, configurable campaign attribution for the public marketing website.
+
+Support standard campaign parameters:
+- `utm_source`
+- `utm_medium`
+- `utm_campaign`
+- `utm_term`
+- `utm_content`
+
+Requirements:
+- Capture valid attribution information when a visitor arrives through a tagged campaign.
+- Preserve attribution across relevant registration and checkout flows without leaking private information.
+- Associate attribution with conversions only when permitted by the user's consent preferences and applicable requirements.
+- Store only the fields necessary for the configured analytics purpose.
+- Prevent arbitrary parameters from being trusted as financial or subscription state.
+- Never use UTM values to authorize users, confirm payments, grant subscriptions, or bypass access restrictions.
+- Sanitize values and limit their length.
+- Avoid sending personal information or sensitive customer data to analytics platforms.
+- Provide a clear analytics-consent mechanism where required.
+- Support campaign reporting for registrations and completed subscriptions when the required data and permissions exist.
+
+Document which analytics provider is configured. Do not fabricate conversion figures or send real analytics events when no provider is configured.
+
+## 15. Real form-success states
+
+Implement consistent, informative success states for forms throughout the application.
+
+Examples include:
+- Contact requests.
+- Support tickets.
+- Custom website requests.
+- Restaurant onboarding.
+- Purchase submissions.
+- Inventory changes.
+- Customer creation or updates.
+- Task creation.
+- Reservation requests.
+- Meeting creation.
+- Website publishing.
+- Billing configuration changes.
+
+Requirements:
+- Only display success after the actual backend operation has succeeded.
+- Provide a concise confirmation of the completed action.
+- Preserve relevant context and offer an appropriate next step.
+- Prevent duplicate submissions when appropriate.
+- Reset form fields only when doing so is safe and useful.
+- Do not treat a browser redirect as proof of payment.
+- Clearly distinguish a submitted reservation request from a confirmed reservation.
+
+Use accessible announcements so screen-reader users can recognize successful operations.
+
+## 16. Helpful form-error states
+
+Implement useful error handling for all form workflows.
+
+Requirements:
+- Validate inputs appropriately on the client and server.
+- Show errors next to the relevant fields when practical.
+- Preserve valid user-entered data after recoverable failures.
+- Provide concise explanations and actionable correction guidance.
+- Handle network failures, expired sessions, duplicate records, insufficient permissions, validation errors, and provider failures.
+- Use field-level validation and form-level errors consistently.
+- Prevent duplicate financial or stock operations after a retry.
+- Never expose internal stack traces, secrets, database credentials, or private server details.
+
+Server-side validation and authorization are mandatory even when browser-side validation is present.
+
+## 17. Confirmation dialogs and modals
+
+Implement a reusable confirmation-dialog system for important actions.
+
+Use it where appropriate for:
+- Deleting records.
+- Archiving customers or ingredients.
+- Canceling reservations.
+- Removing staff members.
+- Publishing a website.
+- Canceling a subscription.
+- Issuing refunds where authorized.
+- Making consequential stock adjustments.
+- Applying irreversible administrative changes.
+
+Requirements:
+- Clearly explain the action and its consequence.
+- Distinguish reversible from irreversible actions.
+- Offer cancel and confirm actions.
+- Use explicit language rather than generic confirmation text.
+- Prevent accidental repeated execution.
+- Enforce permissions and validate the operation on the server.
+- Manage focus and keyboard accessibility correctly.
+- Allow cancellation through the expected accessible interactions.
+- Display the actual result after the operation completes.
+
+For especially consequential actions, require stronger confirmation or reauthentication where appropriate.
+
+Do not insert confirmation dialogs into every ordinary interaction. Avoid creating unnecessary friction.
+
+## 18. Accurate last-updated dates
+
+Add trustworthy updated-at metadata to content where it provides value.
+
+Examples:
+- Public documentation.
+- FAQ or policy pages.
+- Published restaurant menus.
+- Restaurant opening-hour information.
+- Relevant operational reports.
+- Business records where a modification timestamp helps users understand freshness.
+
+Requirements:
+- Use an actual persisted update timestamp from the database or content-management system.
+- Use the correct timezone and a consistent display format.
+- Update the field when a meaningful modification occurs.
+- Distinguish a content update from a visit, page render, or unrelated background read.
+- Avoid showing a fabricated date or claiming information was verified when it was not.
+- Use appropriate date metadata for published content where useful.
+
+For dynamic data such as inventory, show the actual last-synchronized or last-updated timestamp when it is available. Make failed or stale synchronization visible.
+
+## 19. Expandable and accessible FAQs
+
+Implement a reusable FAQ component for the marketing website, pricing pages, documentation, and selected help screens.
+
+Requirements:
+- Expand and collapse answers with accessible controls.
+- Support keyboard interaction and screen readers.
+- Use semantic headings and appropriate button states.
+- Allow clear, scannable questions and answers.
+- Support multiple open answers or single-open behavior according to the existing design system.
+- Work correctly in light and dark modes.
+- Support responsive text and relevant links.
+- Keep content configurable and maintainable.
+- Avoid unnecessarily loading large scripts just for FAQ interactions.
+
+Use accurate answers about actual product functionality, pricing, subscriptions, data privacy, integrations, cancellation, and support.
+
+Do not claim that unsupported integrations, payment methods, free services, or account features exist. Where an answer depends on account eligibility or plan configuration, explain that dependency.
+
+Add structured FAQ data only when eligible and appropriate under current search-engine requirements. Do not promise a particular search ranking.
+
+## 20. Floating contact and support widget
+
+Implement a useful, nonintrusive floating support control.
+
+Depending on actual configured services, it may open:
+- A support request form.
+- An authenticated support conversation.
+- A verified business email contact.
+- A supported messaging channel.
+- A help center or FAQ search.
+
+Requirements:
+- Make the widget responsive.
+- Ensure it never obstructs critical forms, checkout controls, navigation, or mobile content.
+- Provide an accessible name and keyboard support.
+- Allow it to be dismissed or minimized.
+- Respect the user's theme.
+- Preserve context when opening a support request.
+- Include the current URL or relevant record reference only when it is safe and appropriate.
+- Respect authentication and organization permissions.
+- Protect submissions against spam and abuse.
+- Display real submission results and failures.
+
+If a live-chat provider has not been configured, implement a functioning support form or verified contact option. Never display a fake online agent, invented real-time availability, or messages implying that a human has seen a request when no such process exists.
+
+## 21. Integration with the existing restaurant SaaS
+
+These 20 improvements must work alongside the existing product rather than exist as isolated UI demonstrations.
+
+Apply the improvements where appropriate to:
+- The marketing website.
+- Registration and login.
+- Restaurant onboarding.
+- Owner and manager dashboards.
+- Inventory and purchasing.
+- Tip reporting.
+- Customer management.
+- Review management.
+- AI conversations.
+- Meetings and tasks.
+- Reports and exports.
+- Subscription and checkout journeys.
+- Website builder and published restaurant sites.
+- Platform administration.
+
+Respect plan entitlements and role permissions.
+
+For example:
+- Do not allow public search to return private customer records.
+- Do not allow a copied invitation URL to bypass invitation authorization.
+- Do not allow UTM campaign parameters to unlock a paid plan.
+- Do not report successful checkout based on a query-string parameter.
+- Do not publish a website before its required approvals.
+- Do not display unsupported payment methods or integrations.
+- Do not let a confirmation dialog replace backend authorization.
+- Do not let theme or accessibility settings damage existing workflows.
+
+Create shared components and hooks for recurring behavior rather than implementing each feature inconsistently.
+
+## 22. Accessibility and quality standards
+
+Audit all new and modified components for:
+- Keyboard accessibility.
+- Visible focus.
+- Screen-reader semantics.
+- Appropriate contrast in both themes.
+- Accessible form labels.
+- Accessible error and success announcements.
+- Reduced-motion support.
+- Responsive layouts.
+- Browser zoom.
+- Touch-friendly interaction.
+- Clear text and icon labeling.
+
+Avoid unnecessary animation, interaction complexity, or visual clutter.
+
+Where supported by the existing stack, run automated accessibility checks and manually test the important keyboard workflows.
+
+## 23. Testing requirements
+
+Write and execute automated tests for all applicable functionality.
+
+Test at minimum:
+
+1. Light/dark theme persistence.
+2. Announcement creation, visibility, expiry, and dismissal.
+3. Search filtering and cross-tenant isolation.
+4. Back-to-top behavior.
+5. Responsive mobile navigation.
+6. Loading, pending, failure, and retry states.
+7. Hover, focus, selected, and disabled states.
+8. Scroll progress calculations.
+9. Successful and failed clipboard interactions.
+10. Print layouts and print-only visibility.
+11. Sticky elements across different screen sizes.
+12. Keyboard operation of skip-to-content.
+13. Password visibility without losing field values.
+14. Campaign attribution and consent handling.
+15. Form success only after confirmed backend operations.
+16. Form errors while preserving recoverable input.
+17. Confirmation dialogs with authorization checks.
+18. Accurate updated-at timestamps.
+19. FAQ interactions and accessibility.
+20. Floating support form submission and error handling.
+
+Also verify that existing authentication, data isolation, inventory, tip reporting, AI functionality, subscriptions, payment webhooks, and website publishing have not regressed.
+
+Use mocked dependencies only in isolated automated tests where appropriate. Do not represent mocked test results as live integrations.
+
+Fix detected defects and rerun the relevant test suites.
+
+## 24. Implementation workflow
+
+Perform the following steps directly in the existing Google AI Studio project:
+
+1. Inspect the repository and identify the existing components, routes, CSS, authentication flow, database access patterns, and deployment setup.
+2. Map the 20 features to the existing application and determine which shared components should be created or improved.
+3. Implement the features using the current architecture and reusable components.
+4. Integrate all applicable changes into real application workflows.
+5. Add or update tests and documentation.
+6. Run available linting, type checking, tests, and builds.
+7. Fix implementation and integration errors.
+8. Verify critical features in the running application where possible.
+9. Confirm that the GitHub-synchronized code contains the actual implementation.
+10. Report the completed work and any genuinely unresolved external dependencies.
+
+Do not stop after producing a plan or implementing only the easiest visual changes.
+
+Do not delete working code simply to make the new implementation easier. Make controlled, maintainable changes and preserve the application's existing functionality.
+
+## 25. Final acceptance criteria
+
+The enhancement is complete only when:
+- All 20 requested features have been implemented to the applicable scope.
+- Every visible control works.
+- Success messages represent actual successful operations.
+- Errors are clear and recoverable where possible.
+- No feature bypasses authentication or tenant isolation.
+- Public and private search remain separate and secure.
+- Responsive layouts work across supported devices.
+- Accessibility has been reviewed and tested.
+- Existing payment, inventory, AI, customer, and subscription workflows still function.
+- Automated tests and build checks have been executed.
+- No placeholder functionality has been presented as a production integration.
+- Any remaining blocker is documented truthfully.
+
+### Final deliverable
+
+Provide:
+1. A summary of what changed.
+2. The actual files and components modified.
+3. The tests executed and their real results.
+4. Known limitations or blocked integrations.
+5. Confirmation of what was verified in the running application.
+
+**Build and verify the features in the existing product. Do not return another proposal, a static mockup, or a list of suggestions. Implement the real functionality.**

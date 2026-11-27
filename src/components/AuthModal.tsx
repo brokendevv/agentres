@@ -7,7 +7,18 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
-import { X, Mail, Lock, User, Building2, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import {
+  X,
+  Mail,
+  Lock,
+  User,
+  Building2,
+  AlertCircle,
+  CheckCircle2,
+  ArrowRight,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 
 interface AuthModalProps {
   initialMode: 'login' | 'signup';
@@ -36,6 +47,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [mode, setMode] = useState<'login' | 'signup' | 'reset'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [restaurantName, setRestaurantName] = useState('Dar Zitouna Casablanca');
   const [currency, setCurrency] = useState<'MAD' | 'USD' | 'EUR' | 'GBP'>('MAD');
@@ -149,17 +161,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#141A18]/70 backdrop-blur-[2px] p-4 overflow-y-auto"
     >
-      <div className="w-full max-w-md bg-white rounded-xl border border-slate-200 shadow-xl p-6">
-        <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-200">
+      <div className="w-full max-w-md bg-white rounded-xl border border-[#E1E6E1] shadow-xl p-6">
+        <div className="flex items-center justify-between pb-4 mb-5 border-b border-[#E1E6E1]">
           <div>
-            <h2 id="auth-modal-title" className="text-lg font-bold text-slate-900">
+            <h2 id="auth-modal-title" className="text-lg font-bold text-[#18231F]">
               {mode === 'login' && 'Sign In to TablePulse OS'}
-              {mode === 'signup' && 'Create Restaurant Workspace Account'}
+              {mode === 'signup' && 'Create Restaurant Workspace'}
               {mode === 'reset' && 'Reset Account Password'}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[#68736D] mt-0.5">
               Firebase Authentication · Protected Multi-Tenant Session
             </p>
           </div>
@@ -167,14 +179,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close authentication modal"
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+            className="p-1.5 text-[#68736D] hover:text-[#18231F] rounded-lg cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Mode Switcher */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg mb-5">
+        <div className="flex items-center gap-1 p-1 bg-[#EFF2ED] rounded-lg mb-5">
           <button
             type="button"
             onClick={() => {
@@ -182,7 +194,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               setErrorMessage(null);
             }}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-              mode === 'login' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              mode === 'login' ? 'bg-white text-[#18231F] shadow-xs' : 'text-[#68736D] hover:text-[#18231F]'
             }`}
           >
             Sign In
@@ -194,7 +206,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               setErrorMessage(null);
             }}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-              mode === 'signup' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              mode === 'signup' ? 'bg-white text-[#18231F] shadow-xs' : 'text-[#68736D] hover:text-[#18231F]'
             }`}
           >
             Create Account
@@ -206,7 +218,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               setErrorMessage(null);
             }}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-              mode === 'reset' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              mode === 'reset' ? 'bg-white text-[#18231F] shadow-xs' : 'text-[#68736D] hover:text-[#18231F]'
             }`}
           >
             Reset Password
@@ -229,7 +241,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       currency,
                     })
                   }
-                  className="px-3 py-1.5 bg-slate-900 text-white rounded-md font-semibold inline-flex items-center gap-1.5 hover:bg-slate-800 cursor-pointer"
+                  className="px-3 py-1.5 bg-[#176B58] text-white rounded-md font-semibold inline-flex items-center gap-1.5 hover:bg-[#115644] cursor-pointer"
                 >
                   Continue with Authenticated Workspace Session
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -240,8 +252,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
 
         {infoMessage && (
-          <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="mb-4 p-3 rounded-lg bg-[#E6F0E9] border border-[#176B58]/30 text-xs text-[#18231F] flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#176B58] shrink-0 mt-0.5" />
             <span>{infoMessage}</span>
           </div>
         )}
@@ -252,12 +264,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div>
                 <label
                   htmlFor="auth-display-name"
-                  className="block text-xs font-semibold text-slate-700 mb-1"
+                  className="block text-xs font-semibold text-[#18231F] mb-1"
                 >
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <User className="w-4 h-4 text-[#68736D] absolute left-3 top-2.5" />
                   <input
                     id="auth-display-name"
                     type="text"
@@ -265,7 +277,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Yasser Rajeb"
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-[#E1E6E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#176B58]"
                   />
                 </div>
               </div>
@@ -274,12 +286,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <div className="col-span-2">
                   <label
                     htmlFor="auth-restaurant-name"
-                    className="block text-xs font-semibold text-slate-700 mb-1"
+                    className="block text-xs font-semibold text-[#18231F] mb-1"
                   >
                     Restaurant or Group Name
                   </label>
                   <div className="relative">
-                    <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <Building2 className="w-4 h-4 text-[#68736D] absolute left-3 top-2.5" />
                     <input
                       id="auth-restaurant-name"
                       type="text"
@@ -287,7 +299,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       value={restaurantName}
                       onChange={(e) => setRestaurantName(e.target.value)}
                       placeholder="Dar Zitouna"
-                      className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600"
+                      className="w-full pl-9 pr-3 py-2 text-sm border border-[#E1E6E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#176B58]"
                     />
                   </div>
                 </div>
@@ -295,7 +307,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <div>
                   <label
                     htmlFor="auth-currency"
-                    className="block text-xs font-semibold text-slate-700 mb-1"
+                    className="block text-xs font-semibold text-[#18231F] mb-1"
                   >
                     Currency
                   </label>
@@ -303,7 +315,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     id="auth-currency"
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value as any)}
-                    className="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-600"
+                    className="w-full px-2.5 py-2 text-sm border border-[#E1E6E1] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#176B58]"
                   >
                     <option value="MAD">MAD</option>
                     <option value="USD">USD</option>
@@ -316,11 +328,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           )}
 
           <div>
-            <label htmlFor="auth-email" className="block text-xs font-semibold text-slate-700 mb-1">
+            <label htmlFor="auth-email" className="block text-xs font-semibold text-[#18231F] mb-1">
               Work Email Address
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <Mail className="w-4 h-4 text-[#68736D] absolute left-3 top-2.5" />
               <input
                 id="auth-email"
                 type="email"
@@ -328,7 +340,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="owner@darzitouna.ma"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-[#E1E6E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#176B58]"
               />
             </div>
           </div>
@@ -337,22 +349,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div>
               <label
                 htmlFor="auth-password"
-                className="block text-xs font-semibold text-slate-700 mb-1"
+                className="block text-xs font-semibold text-[#18231F] mb-1"
               >
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <Lock className="w-4 h-4 text-[#68736D] absolute left-3 top-2.5" />
                 <input
                   id="auth-password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   minLength={6}
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600"
+                  className="w-full pl-9 pr-10 py-2 text-sm border border-[#E1E6E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#176B58]"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  className="absolute right-2.5 top-2 p-1 text-[#68736D] hover:text-[#18231F] rounded cursor-pointer"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
           )}
@@ -360,7 +386,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+            className="w-full py-2.5 px-4 bg-[#176B58] hover:bg-[#115644] disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
           >
             {loading
               ? 'Authenticating...'
@@ -375,16 +401,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {mode !== 'reset' && (
           <>
             <div className="my-4 flex items-center gap-3">
-              <div className="h-px bg-slate-200 flex-1" />
-              <span className="text-xs text-slate-400">or continue with</span>
-              <div className="h-px bg-slate-200 flex-1" />
+              <div className="h-px bg-[#E1E6E1] flex-1" />
+              <span className="text-xs text-[#68736D]">or continue with</span>
+              <div className="h-px bg-[#E1E6E1] flex-1" />
             </div>
 
             <button
               type="button"
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 px-4 bg-white border border-[#E1E6E1] hover:bg-[#EFF2ED] text-[#18231F] text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path

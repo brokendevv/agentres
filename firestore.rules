@@ -156,23 +156,23 @@ service cloud.firestore {
       // Domain Operational Collections under Organization Master Gate
       match /{collectionName}/{docId} {
         allow get: if isValidId(orgId) && isValidId(docId) &&
-          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications'] &&
+          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications', 'announcements', 'supportTickets'] &&
           isOrgMember(orgId);
         allow list: if isValidId(orgId) &&
-          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications'] &&
+          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications', 'announcements', 'supportTickets'] &&
           isOrgMember(orgId) &&
           resource.data.orgId == orgId;
         allow create: if isValidId(orgId) && isValidId(docId) &&
-          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications'] &&
+          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications', 'announcements', 'supportTickets'] &&
           isOrgMember(orgId) &&
           isValidTenantRecord(incoming(), orgId);
         allow update: if isValidId(orgId) && isValidId(docId) &&
-          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications'] &&
+          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications', 'announcements', 'supportTickets'] &&
           isOrgMember(orgId) &&
           isValidTenantRecord(incoming(), orgId) &&
           incoming().orgId == existing().orgId;
         allow delete: if isValidId(orgId) && isValidId(docId) &&
-          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications'] &&
+          collectionName in ['branches', 'ingredients', 'suppliers', 'purchases', 'recipes', 'tips', 'customers', 'reservations', 'orders', 'reviews', 'tasks', 'meetings', 'messages', 'checklists', 'automations', 'website', 'notifications', 'announcements', 'supportTickets'] &&
           (isOrgOwner(orgId) || isPlatformAdmin());
       }
     }

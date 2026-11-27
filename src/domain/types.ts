@@ -342,6 +342,8 @@ export interface WebsiteConfig {
     | 'in_production'
     | 'delivered';
   bespokeNotes: string;
+  siteAnnouncementText?: string;
+  siteAnnouncementEnabled?: boolean;
   updatedAt: string;
 }
 

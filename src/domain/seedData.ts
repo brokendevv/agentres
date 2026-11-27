@@ -20,9 +20,10 @@ import {
   AuditLog,
   Member,
 } from './types';
+import { AnnouncementItem, SupportTicketRecord } from './enhancements';
 
 export function buildInitialRestaurantDataset(orgId: string, ownerUid: string, ownerEmail: string, ownerName: string) {
-  const now = new Date().toISOString();
+  const now = '2026-10-21T08:00:00.000Z';
   const branchMainId = 'branch_casablanca_maarif';
   const branchRabatId = 'branch_rabat_agdal';
 
@@ -719,8 +720,46 @@ export function buildInitialRestaurantDataset(orgId: string, ownerUid: string, o
     domainVerified: false,
     bespokeRequestStatus: 'none',
     bespokeNotes: '',
+    siteAnnouncementText: 'Autumn White Truffle & Taliouine Saffron Tasting Menu available Tue–Sun.',
+    siteAnnouncementEnabled: true,
     updatedAt: now,
   };
+
+  const announcements: AnnouncementItem[] = [
+    {
+      id: 'ann_platform_oct2026',
+      orgId,
+      title: 'Release v2026.10: Side-by-Side AI Invoice OCR & Rizon Payout Guide',
+      message:
+        'Verify supplier receipt line items before creating purchase orders, and configure USD ACH / EUR SEPA settlements in Billing.',
+      severity: 'feature',
+      scope: 'both',
+      ctaLabel: 'Explore Features',
+      ctaHref: '#operations',
+      published: true,
+      dismissible: true,
+      expiresAt: '2026-12-31T23:59:59.000Z',
+      createdBy: ownerUid,
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
+  const supportTickets: SupportTicketRecord[] = [
+    {
+      id: 'tkt_init_101',
+      orgId,
+      requesterName: ownerName || 'Yasser Rajeb',
+      requesterEmail: ownerEmail,
+      category: 'website_builder',
+      subject: 'DNS TXT verification for www.darzitouna.ma',
+      message: 'Submitted CNAME and TXT records for custom domain verification.',
+      contextUrl: '/growth_experience#website',
+      status: 'in_review',
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
 
   const notifications: NotificationItem[] = [
     {
@@ -778,6 +817,8 @@ export function buildInitialRestaurantDataset(orgId: string, ownerUid: string, o
     checklists,
     automations,
     website,
+    announcements,
+    supportTickets,
     notifications,
     auditLogs,
   };

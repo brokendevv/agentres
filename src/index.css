@@ -1,13 +1,261 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg-page: #F7F8F5;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #EFF2ED;
+  --bg-brand-soft: #E6F0E9;
+  --text-primary: #18231F;
+  --text-secondary: #68736D;
+  --brand-primary: #176B58;
+  --brand-hover: #115644;
+  --border-subtle: #E1E6E1;
+  --focus-ring: #176B58;
+  color-scheme: light;
+}
+
+html.dark {
+  --bg-page: #141A18;
+  --bg-surface: #1C2420;
+  --bg-subtle: #232C27;
+  --bg-brand-soft: #1F352D;
+  --text-primary: #F0F3F0;
+  --text-secondary: #B4C0B8;
+  --brand-primary: #58B99A;
+  --brand-hover: #46A385;
+  --border-subtle: #303A35;
+  --focus-ring: #58B99A;
+  color-scheme: dark;
+}
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    transition: background-color 150ms ease, color 150ms ease;
+    letter-spacing: -0.011em;
+  }
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
   }
 
   .font-mono,
   .tabular-nums {
     font-family: 'IBM Plex Mono', monospace;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Consistent Keyboard Focus & Interaction States */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Light-Theme Harmonization for Legacy Neutral Utilities */
+html:not(.dark) .bg-slate-50 {
+  background-color: #F7F8F5 !important;
+}
+
+html:not(.dark) .bg-slate-50\/60,
+html:not(.dark) .bg-slate-100 {
+  background-color: #EFF2ED !important;
+}
+
+html:not(.dark) .text-slate-900,
+html:not(.dark) .text-slate-800 {
+  color: #18231F !important;
+}
+
+html:not(.dark) .text-slate-700,
+html:not(.dark) .text-slate-600,
+html:not(.dark) .text-slate-500 {
+  color: #68736D !important;
+}
+
+html:not(.dark) .border-slate-200,
+html:not(.dark) .border-slate-300,
+html:not(.dark) .border-slate-100 {
+  border-color: #E1E6E1 !important;
+}
+
+html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #E1E6E1 !important;
+}
+
+/* Dark Mode Token Overrides for Seamless Component Contrast */
+html.dark body,
+html.dark .bg-\[\#F7F8F5\],
+html.dark .bg-slate-50 {
+  background-color: #141A18 !important;
+  color: #F0F3F0 !important;
+}
+
+html.dark .bg-white,
+html.dark .bg-white\/95,
+html.dark .bg-\[\#FFFFFF\] {
+  background-color: #1C2420 !important;
+}
+
+html.dark .bg-\[\#EFF2ED\],
+html.dark .bg-\[\#EFF2ED\]\/70,
+html.dark .bg-slate-50\/60,
+html.dark .bg-slate-100 {
+  background-color: #232C27 !important;
+}
+
+html.dark .bg-\[\#E6F0E9\],
+html.dark .bg-\[\#E6F0E9\]\/70,
+html.dark .bg-\[\#E6F0E9\]\/40 {
+  background-color: #1F352D !important;
+}
+
+html.dark .text-\[\#18231F\],
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+  color: #F0F3F0 !important;
+}
+
+html.dark .text-\[\#68736D\],
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-slate-500 {
+  color: #B4C0B8 !important;
+}
+
+html.dark .text-\[\#176B58\] {
+  color: #58B99A !important;
+}
+
+html.dark .border-\[\#E1E6E1\],
+html.dark .border-slate-200,
+html.dark .border-slate-300,
+html.dark .border-slate-100 {
+  border-color: #303A35 !important;
+}
+
+html.dark .divide-\[\#E1E6E1\] > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #303A35 !important;
+}
+
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #232C27 !important;
+  color: #F0F3F0 !important;
+  border-color: #303A35 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #7D8C83 !important;
+}
+
+html.dark .hover\:bg-\[\#EFF2ED\]:hover,
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-100:hover {
+  background-color: #232C27 !important;
+}
+
+html.dark button.bg-\[\#18231F\],
+html.dark button.bg-slate-900 {
+  background-color: #232C27 !important;
+  border: 1px solid #303A35 !important;
+  color: #F0F3F0 !important;
+}
+
+html.dark button.bg-\[\#18231F\]:hover,
+html.dark button.bg-slate-900:hover {
+  background-color: #2E3A33 !important;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Professional Print Stylesheet */
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  body,
+  html,
+  html.dark,
+  html.dark .bg-slate-50,
+  html.dark .bg-white,
+  html.dark .bg-\[\#F7F8F5\],
+  html.dark .bg-\[\#FFFFFF\] {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10pt !important;
+  }
+
+  aside,
+  nav,
+  header .no-print,
+  .no-print,
+  button:not(.print-keep),
+  form.no-print,
+  [data-no-print="true"] {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  main {
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto;
+  }
+
+  th,
+  td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 6px 8px !important;
+    color: #000000 !important;
+    background: #ffffff !important;
   }
 }

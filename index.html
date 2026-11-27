@@ -2,8 +2,81 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (function () {
+        // 1. Prevent "TypeError: Cannot set property fetch of #<Window> which has only a getter"
+        // when browser extensions or iframe shims attempt to overwrite window.fetch.
+        try {
+          var currentFetch = window.fetch ? window.fetch.bind(window) : undefined;
+          var winDesc = Object.getOwnPropertyDescriptor(window, 'fetch');
+          if (winDesc && winDesc.get && !winDesc.set && winDesc.configurable !== false) {
+            Object.defineProperty(window, 'fetch', {
+              configurable: true,
+              enumerable: true,
+              get: function () {
+                return currentFetch || winDesc.get.call(window);
+              },
+              set: function (nextFetch) {
+                if (typeof nextFetch === 'function') {
+                  currentFetch = nextFetch;
+                }
+              },
+            });
+          }
+          var protoDesc =
+            typeof Window !== 'undefined' && Window.prototype
+              ? Object.getOwnPropertyDescriptor(Window.prototype, 'fetch')
+              : null;
+          if (protoDesc && protoDesc.get && !protoDesc.set && protoDesc.configurable !== false) {
+            Object.defineProperty(Window.prototype, 'fetch', {
+              configurable: true,
+              enumerable: true,
+              get: function () {
+                return currentFetch || protoDesc.get.call(this);
+              },
+              set: function (nextFetch) {
+                if (typeof nextFetch === 'function') {
+                  currentFetch = nextFetch;
+                }
+              },
+            });
+          }
+        } catch (e) {}
+
+        // 2. Suppress uncaught errors injected by third-party browser extensions (chrome-extension://)
+        window.addEventListener(
+          'error',
+          function (event) {
+            var msg = String((event && event.message) || '');
+            var file = String((event && event.filename) || '');
+            if (
+              file.indexOf('chrome-extension://') === 0 ||
+              file.indexOf('moz-extension://') === 0 ||
+              msg.indexOf('Cannot set property fetch') !== -1
+            ) {
+              event.stopImmediatePropagation();
+              event.preventDefault();
+              return false;
+            }
+          },
+          true
+        );
+
+        // 3. Synchronous dark/light theme initialization to prevent flash
+        try {
+          var saved = localStorage.getItem('tablepulse_theme');
+          var sysDark =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (saved === 'dark' || (!saved && sysDark)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0F172A" />
+    <meta name="theme-color" content="#176B58" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -21,7 +94,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
-  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-amber-600 selection:text-white">
+  <body class="bg-[#F7F8F5] text-[#18231F] antialiased selection:bg-[#176B58] selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -67,20 +67,20 @@ export const PWAOfflineBar: React.FC<PWAOfflineBarProps> = ({
       <button
         type="button"
         onClick={() => setSimulatedOffline((prev) => !prev)}
-        className={`px-2.5 py-1.5 rounded-lg border font-medium inline-flex items-center gap-1.5 cursor-pointer ${
+        className={`px-2.5 py-1.5 rounded-lg border font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
           effectiveOnline
-            ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-            : 'bg-amber-100 border-amber-300 text-amber-900'
+            ? 'bg-white border-[#E1E6E1] text-[#18231F] hover:bg-[#EFF2ED]'
+            : 'bg-[#E6F0E9] border-[#176B58]/40 text-[#18231F]'
         }`}
       >
         {effectiveOnline ? (
           <>
-            <Wifi className="w-3.5 h-3.5 text-emerald-600" />
+            <Wifi className="w-3.5 h-3.5 text-[#176B58]" />
             <span>Online</span>
           </>
         ) : (
           <>
-            <WifiOff className="w-3.5 h-3.5 text-amber-700" />
+            <WifiOff className="w-3.5 h-3.5 text-[#176B58]" />
             <span>Offline Queue Active ({offlineQueue.length})</span>
           </>
         )}
@@ -90,7 +90,7 @@ export const PWAOfflineBar: React.FC<PWAOfflineBarProps> = ({
         <button
           type="button"
           onClick={onQueueOfflineSample}
-          className="px-2.5 py-1.5 rounded-lg bg-amber-600 text-white font-semibold hover:bg-amber-700 cursor-pointer"
+          className="px-2.5 py-1.5 rounded-lg bg-[#176B58] text-white font-semibold hover:bg-[#115644] transition-colors cursor-pointer"
         >
           + Draft Offline Stock Count
         </button>
@@ -100,7 +100,7 @@ export const PWAOfflineBar: React.FC<PWAOfflineBarProps> = ({
         <button
           type="button"
           onClick={onSyncOfflineQueue}
-          className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold inline-flex items-center gap-1 hover:bg-emerald-700 cursor-pointer"
+          className="px-2.5 py-1.5 rounded-lg bg-[#176B58] text-white font-semibold inline-flex items-center gap-1 hover:bg-[#115644] transition-colors cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           Sync {offlineQueue.length} Queued Op(s)
@@ -111,7 +111,7 @@ export const PWAOfflineBar: React.FC<PWAOfflineBarProps> = ({
         <button
           type="button"
           onClick={handleInstall}
-          className="px-2.5 py-1.5 rounded-lg bg-slate-900 text-white font-semibold inline-flex items-center gap-1 hover:bg-slate-800 cursor-pointer"
+          className="px-2.5 py-1.5 rounded-lg bg-[#18231F] text-white font-semibold inline-flex items-center gap-1 hover:bg-[#115644] transition-colors cursor-pointer"
         >
           <Download className="w-3.5 h-3.5" />
           Install PWA

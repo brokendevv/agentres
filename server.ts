@@ -460,6 +460,97 @@ app.post(
   }
 );
 
+// Verified Support Request Endpoint (Feature #20: Floating Contact & Support Widget)
+const serverSupportTickets: Array<Record<string, any>> = [];
+
+app.post('/api/support/tickets', (req, res) => {
+  try {
+    const {
+      orgId = 'public_visitor',
+      requesterName,
+      requesterEmail,
+      category = 'general',
+      subject,
+      message,
+      contextUrl = '/',
+      honeypot = '',
+    } = req.body || {};
+
+    if (honeypot && String(honeypot).trim() !== '') {
+      res.status(400).json({ error: 'Spam protection triggered.' });
+      return;
+    }
+
+    if (!requesterName || String(requesterName).trim().length < 2) {
+      res.status(400).json({
+        error: 'Please enter your name (at least 2 characters).',
+        fieldErrors: { requesterName: 'Name must be at least 2 characters.' },
+      });
+      return;
+    }
+
+    if (
+      !requesterEmail ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(requesterEmail).trim())
+    ) {
+      res.status(400).json({
+        error: 'Please enter a valid contact email address.',
+        fieldErrors: { requesterEmail: 'Valid email address is required.' },
+      });
+      return;
+    }
+
+    if (!subject || String(subject).trim().length < 4) {
+      res.status(400).json({
+        error: 'Subject must be at least 4 characters long.',
+        fieldErrors: { subject: 'Subject must be at least 4 characters.' },
+      });
+      return;
+    }
+
+    if (!message || String(message).trim().length < 10) {
+      res.status(400).json({
+        error: 'Please describe your request in at least 10 characters.',
+        fieldErrors: { message: 'Message must be at least 10 characters.' },
+      });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const ticket = {
+      id: `tkt_${Date.now()}`,
+      orgId: String(orgId).slice(0, 128),
+      requesterName: String(requesterName).trim().slice(0, 120),
+      requesterEmail: String(requesterEmail).trim().slice(0, 160),
+      category: String(category).slice(0, 60),
+      subject: String(subject).trim().slice(0, 200),
+      message: String(message).trim().slice(0, 2000),
+      contextUrl: String(contextUrl).slice(0, 300),
+      status: 'received',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    serverSupportTickets.unshift(ticket);
+    res.status(201).json({
+      status: 'created',
+      ticket,
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: err instanceof Error ? err.message : 'Unable to submit support request.',
+    });
+  }
+});
+
+app.get('/api/support/tickets', (req, res) => {
+  const orgId = String(req.query.orgId || '');
+  const filtered = orgId
+    ? serverSupportTickets.filter((t) => t.orgId === orgId)
+    : serverSupportTickets;
+  res.json({ tickets: filtered.slice(0, 50) });
+});
+
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

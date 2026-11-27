@@ -432,6 +432,45 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["orgId", "actorUid", "actorEmail", "action", "entityType", "entityId", "details", "createdAt"]
+    },
+    "AnnouncementItem": {
+      "title": "AnnouncementItem",
+      "description": "Platform or restaurant announcement banner item",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 160 },
+        "message": { "type": "string", "maxLength": 600 },
+        "severity": { "type": "string", "enum": ["info", "feature", "maintenance", "warning"] },
+        "scope": { "type": "string", "enum": ["public", "dashboard", "both", "restaurant_site"] },
+        "ctaLabel": { "type": "string", "maxLength": 80 },
+        "ctaHref": { "type": "string", "maxLength": 240 },
+        "published": { "type": "boolean" },
+        "dismissible": { "type": "boolean" },
+        "expiresAt": { "type": "string", "maxLength": 64 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "title", "message", "severity", "scope", "published", "dismissible", "createdBy", "createdAt", "updatedAt"]
+    },
+    "SupportTicketRecord": {
+      "title": "SupportTicketRecord",
+      "description": "Customer or tenant support request ticket",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "maxLength": 128 },
+        "requesterName": { "type": "string", "maxLength": 120 },
+        "requesterEmail": { "type": "string", "maxLength": 160 },
+        "category": { "type": "string", "enum": ["billing", "inventory_ledger", "ai_assistant", "website_builder", "security", "general"] },
+        "subject": { "type": "string", "maxLength": 200 },
+        "message": { "type": "string", "maxLength": 2000 },
+        "contextUrl": { "type": "string", "maxLength": 300 },
+        "status": { "type": "string", "enum": ["received", "in_review", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "requesterName", "requesterEmail", "category", "subject", "message", "contextUrl", "status", "createdAt", "updatedAt"]
     }
   },
   "firestore": {
@@ -518,6 +557,14 @@
     "/organizations/{orgId}/notifications/{notificationId}": {
       "schema": { "$ref": "#/entities/NotificationItem" },
       "description": "In-app operational notifications"
+    },
+    "/organizations/{orgId}/announcements/{announcementId}": {
+      "schema": { "$ref": "#/entities/AnnouncementItem" },
+      "description": "Platform and restaurant announcements"
+    },
+    "/organizations/{orgId}/supportTickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicketRecord" },
+      "description": "Support tickets submitted by workspace members"
     },
     "/organizations/{orgId}/auditLogs/{logId}": {
       "schema": { "$ref": "#/entities/AuditLog" },
